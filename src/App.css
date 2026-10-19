@@ -22,7 +22,17 @@ body {
 }
 
 .app {
-  width: min(960px, 100%);
+  width: min(1180px, 100%);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.grid > .panel:first-child {
+  grid-column: 1 / -1;
 }
 
 .header h1 {
@@ -78,4 +88,133 @@ body {
 
 .table tbody tr:hover {
   background: #16223c;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.badge-online {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+.badge-offline {
+  background: #3f1d1d;
+  color: #fca5a5;
+}
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.field input {
+  min-width: 11rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0b1222;
+  color: #e2e8f0;
+}
+
+.button {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.button-secondary {
+  background: transparent;
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+.video-wrap {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  background: #020617;
+}
+
+.video-wrap video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #020617;
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: #0b1222;
+  color: #93c5fd;
+  word-break: break-all;
+}
+
+.recordings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recordings li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #1e293b;
+  font-size: 0.88rem;
+}
+
+.recordings a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+.recordings a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    margin-top: 1rem;
+  }
 }
