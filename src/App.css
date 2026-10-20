@@ -287,8 +287,64 @@ code {
 
 .page-actions {
   display: flex;
+  align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.admin-session {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.admin-session strong {
+  color: #e2e8f0;
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  margin-top: 3rem;
+  padding: 1.75rem;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  background: #111c33;
+}
+
+.auth-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.auth-head .page-title + .muted {
+  margin: 0.3rem 0 0;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.auth-form .field input {
+  width: 100%;
+  min-width: 0;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.auth-hint {
+  margin: 1.25rem 0 0;
+  line-height: 1.6;
 }
 
 .panel-head {

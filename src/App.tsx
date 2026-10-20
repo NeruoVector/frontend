@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AdminPage } from './AdminPage'
+import { AdminAuthGate } from './AdminAuthGate'
 import { API_BASE_URL, apiUrl } from './api'
 import { StorePage } from './StorePage'
 import './App.css'
@@ -148,7 +148,9 @@ function App() {
               <p className="error">
                 데이터를 불러오지 못했습니다: {state.message}
                 <br />
-                <span className="muted">백엔드({API_BASE_URL})가 실행 중인지 확인하세요.</span>
+                <span className="muted">
+                  백엔드({API_BASE_URL || 'same-origin'})가 실행 중인지 확인하세요.
+                </span>
               </p>
             )}
 
@@ -197,7 +199,9 @@ function App() {
       )}
 
       {view === 'store' && <StorePage onOpenAdmin={() => navigate('admin')} />}
-      {view === 'admin' && <AdminPage onOpenStore={() => navigate('store')} />}
+      {view === 'admin' && (
+        <AdminAuthGate onOpenStore={() => navigate('store')} />
+      )}
     </main>
   )
 }
