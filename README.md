@@ -1,11 +1,14 @@
 # NeuroVector Frontend
 
-드론 감지 결과, 텔레메트리, 실시간 카메라, 녹화 파일을 보여주는 React 대시보드입니다.
+드론 감지 결과, 텔레메트리, 실시간 카메라, 녹화 파일을 보여주는 React 대시보드와
+상품·재고 관리 및 주문 기능을 제공하는 웹 스토어입니다.
 
 - **React 19 + TypeScript + Vite**
 - 감지/텔레메트리는 백엔드 REST API 로 조회
 - 카메라는 백엔드 WHEP 프록시를 통해 WebRTC 로 재생
 - 녹화 파일은 MediaMTX 녹화본을 백엔드 API 로 다운로드
+- 관리자 콘솔에서 상품 등록·수정, 판매 상태 변경, 재고 설정
+- 스토어에서 주문하면 백엔드가 재고를 즉시 차감
 
 ## 요구 사항
 
@@ -26,12 +29,40 @@ npm run dev          # http://localhost:5173
 
 ## 화면
 
+상단 내비게이션으로 **모니터링 / 스토어 / 관리자** 화면을 오갈 수 있습니다.
+각 화면은 `#dashboard`, `#store`, `#admin` 해시로 직접 열 수 있습니다.
+
+### 모니터링
+
 | 패널 | API |
 | --- | --- |
 | 최근 감지 | `GET /api/v1/detections` |
 | 드론 상태 | `GET /api/v1/flights/status` (5초 폴링) |
 | 실시간 카메라 | `POST /api/v1/streams/{drone_id}/whep` |
 | 녹화 파일 | `GET /api/v1/recordings?drone_id=` |
+
+### 스토어
+
+- 판매 중(`active=true`) 상품만 조회: `GET /api/v1/inventory?active=true`
+- 장바구니에 담은 상품을 `POST /api/v1/orders` 로 주문
+- 주문 생성과 같은 트랜잭션에서 재고가 차감되며, 응답에 주문번호와 금액이 포함됩니다.
+- 품절 상품은 담기 버튼이 비활성화되고, 재고보다 많은 수량은 주문할 수 없습니다.
+
+### 관리자
+
+| 기능 | API |
+| --- | --- |
+| 상품 목록 | `GET /api/v1/inventory?limit=500` |
+| 상품 추가 | `POST /api/v1/inventory` |
+| 상품 수정 | `PATCH /api/v1/inventory/{id}` |
+| 판매 상태 변경 | `PATCH /api/v1/inventory/{id}` (`active`) |
+| 재고 설정 | `PATCH /api/v1/inventory/{id}` (`stock_quantity`) |
+
+관리자 콘솔에서 재고를 저장하거나 상품을 추가·수정하면 Redis 캐시가
+무효화되어 스토어와 관리자 화면에 최신 값이 표시됩니다.
+
+> 현재 백엔드에는 인증/권한 계층이 없습니다. 관리자 화면은 내부 운영·데모용이며,
+> 공개 배포 시 API 인증을 추가해야 합니다.
 
 카메라 패널은 드론이 아래 SRT 주소로 송출 중일 때 동작합니다.
 
@@ -68,7 +99,12 @@ MediaMTX 의 answer SDP 를 받아 `<video>` 에 연결합니다.
 
 ```
 src/
-├── App.tsx      # 대시보드 + 카메라/녹화/상태 패널
+├── App.tsx        # 내비게이션 + 모니터링 대시보드
+├── AdminPage.tsx  # 상품·재고·판매 상태 관리
+├── StorePage.tsx  # 상품 목록·장바구니·주문
+├── api.ts         # API 주소와 오류 파싱
+├── format.ts      # 금액 포맷
+├── types.ts       # 상품·주문 타입
 ├── App.css
 ├── main.tsx
 └── index.css

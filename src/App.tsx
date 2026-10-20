@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { AdminPage } from './AdminPage'
+import { API_BASE_URL, apiUrl } from './api'
+import { StorePage } from './StorePage'
 import './App.css'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8081'
 
 type Detection = {
   id: string
@@ -44,8 +45,12 @@ type LoadState =
   | { status: 'error'; message: string }
   | { status: 'ready'; detections: Detection[] }
 
-function apiUrl(path: string) {
-  return `${API_BASE_URL}${path}`
+type View = 'dashboard' | 'store' | 'admin'
+
+function viewFromHash(): View {
+  const hash = window.location.hash.replace('#', '')
+  if (hash === 'store' || hash === 'admin') return hash
+  return 'dashboard'
 }
 
 function formatTime(value: string | null) {
@@ -60,6 +65,17 @@ function formatBytes(bytes: number) {
 
 function App() {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+  const [view, setView] = useState<View>(() => viewFromHash())
+
+  useEffect(() => {
+    const syncView = () => setView(viewFromHash())
+    window.addEventListener('hashchange', syncView)
+    return () => window.removeEventListener('hashchange', syncView)
+  }, [])
+
+  function navigate(next: View) {
+    window.location.hash = next
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -90,66 +106,98 @@ function App() {
   return (
     <main className="app">
       <header className="header">
-        <h1>NeuroVector</h1>
-        <p className="subtitle">드론 장애물 감지 · 실시간 영상 · 배송 모니터</p>
+        <div className="header-row">
+          <div>
+            <h1>NeuroVector</h1>
+            <p className="subtitle">드론 장애물 감지 · 실시간 영상 · 배송 모니터</p>
+          </div>
+          <nav className="nav" aria-label="주요 화면">
+            <button
+              type="button"
+              className={view === 'dashboard' ? 'nav-item active' : 'nav-item'}
+              onClick={() => navigate('dashboard')}
+            >
+              모니터링
+            </button>
+            <button
+              type="button"
+              className={view === 'store' ? 'nav-item active' : 'nav-item'}
+              onClick={() => navigate('store')}
+            >
+              스토어
+            </button>
+            <button
+              type="button"
+              className={view === 'admin' ? 'nav-item active' : 'nav-item'}
+              onClick={() => navigate('admin')}
+            >
+              관리자
+            </button>
+          </nav>
+        </div>
       </header>
 
-      <div className="grid">
-        <section className="panel">
-          <h2>최근 감지</h2>
+      {view === 'dashboard' && (
+        <div className="grid">
+          <section className="panel">
+            <h2>최근 감지</h2>
 
-          {state.status === 'loading' && <p className="muted">불러오는 중…</p>}
+            {state.status === 'loading' && <p className="muted">불러오는 중…</p>}
 
-          {state.status === 'error' && (
-            <p className="error">
-              데이터를 불러오지 못했습니다: {state.message}
-              <br />
-              <span className="muted">백엔드({API_BASE_URL})가 실행 중인지 확인하세요.</span>
-            </p>
-          )}
+            {state.status === 'error' && (
+              <p className="error">
+                데이터를 불러오지 못했습니다: {state.message}
+                <br />
+                <span className="muted">백엔드({API_BASE_URL})가 실행 중인지 확인하세요.</span>
+              </p>
+            )}
 
-          {state.status === 'ready' && state.detections.length === 0 && (
-            <p className="muted">아직 감지 기록이 없습니다.</p>
-          )}
+            {state.status === 'ready' && state.detections.length === 0 && (
+              <p className="muted">아직 감지 기록이 없습니다.</p>
+            )}
 
-          {state.status === 'ready' && state.detections.length > 0 && (
-            <div className="scroll">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>시각</th>
-                    <th>드론</th>
-                    <th>객체</th>
-                    <th>신뢰도</th>
-                    <th>위치</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {state.detections.map((d) => (
-                    <tr key={d.id}>
-                      <td>{formatTime(d.detected_at)}</td>
-                      <td>{d.drone_id}</td>
-                      <td>{d.label}</td>
-                      <td>{(d.confidence * 100).toFixed(1)}%</td>
-                      <td>
-                        {d.latitude != null && d.longitude != null
-                          ? `${d.latitude.toFixed(5)}, ${d.longitude.toFixed(5)}`
-                          : '—'}
-                      </td>
+            {state.status === 'ready' && state.detections.length > 0 && (
+              <div className="scroll">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>시각</th>
+                      <th>드론</th>
+                      <th>객체</th>
+                      <th>신뢰도</th>
+                      <th>위치</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                  </thead>
+                  <tbody>
+                    {state.detections.map((d) => (
+                      <tr key={d.id}>
+                        <td>{formatTime(d.detected_at)}</td>
+                        <td>{d.drone_id}</td>
+                        <td>{d.label}</td>
+                        <td>{(d.confidence * 100).toFixed(1)}%</td>
+                        <td>
+                          {d.latitude != null && d.longitude != null
+                            ? `${d.latitude.toFixed(5)}, ${d.longitude.toFixed(5)}`
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-        <DroneStatusPanel />
+          <DroneStatusPanel />
 
-        <CameraPanel />
+          <CameraPanel />
 
-        <RecordingsPanel />
-      </div>
+          <RecordingsPanel />
+        </div>
+      )}
+
+      {view === 'store' && <StorePage onOpenAdmin={() => navigate('admin')} />}
+      {view === 'admin' && <AdminPage onOpenStore={() => navigate('store')} />}
     </main>
   )
 }
