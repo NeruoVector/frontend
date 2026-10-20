@@ -7,7 +7,7 @@
 - 감지/텔레메트리는 백엔드 REST API 로 조회
 - 카메라는 백엔드 WHEP 프록시를 통해 WebRTC 로 재생
 - 녹화 파일은 MediaMTX 녹화본을 백엔드 API 로 다운로드
-- 관리자 콘솔에서 상품 등록·수정, 판매 상태 변경, 재고 설정
+- 관리자 세션 로그인 후 상품 등록·수정, 판매 상태 변경, 재고 설정
 - 스토어에서 주문하면 백엔드가 재고를 즉시 차감
 
 ## 요구 사항
@@ -23,9 +23,9 @@ cp .env.example .env
 npm run dev          # http://localhost:5173
 ```
 
-개발 서버는 `/api` 요청을 `http://localhost:8081` 로 프록시합니다.
-백엔드 주소를 바꾸려면 `vite.config.ts` 의 `server.proxy` 또는 `.env` 의
-`VITE_API_BASE_URL` 을 수정하세요.
+개발 서버는 `/api` 요청을 `http://localhost:8081` 로 프록시합니다. `.env` 의
+`VITE_API_BASE_URL` 을 비워두면 same-origin `/api` 를 사용하고, 원격 백엔드를
+직접 호출하려면 절대 URL 을 지정하세요. (세션 쿠키를 쓰므로 같은 호스트 사용 권장)
 
 ## 화면
 
@@ -50,8 +50,15 @@ npm run dev          # http://localhost:5173
 
 ### 관리자
 
+`#admin` 화면은 먼저 세션을 확인하고, 로그인하지 않았으면 로그인 폼을 표시합니다.
+로그인은 `POST /api/v1/admin/auth/login` 으로 수행하며 HttpOnly 세션 쿠키를 사용합니다.
+로그아웃은 `POST /api/v1/admin/auth/logout` 입니다.
+
 | 기능 | API |
 | --- | --- |
+| 세션 확인 | `GET /api/v1/admin/auth/me` |
+| 로그인 | `POST /api/v1/admin/auth/login` |
+| 로그아웃 | `POST /api/v1/admin/auth/logout` |
 | 상품 목록 | `GET /api/v1/inventory?limit=500` |
 | 상품 추가 | `POST /api/v1/inventory` |
 | 상품 수정 | `PATCH /api/v1/inventory/{id}` |
@@ -61,8 +68,9 @@ npm run dev          # http://localhost:5173
 관리자 콘솔에서 재고를 저장하거나 상품을 추가·수정하면 Redis 캐시가
 무효화되어 스토어와 관리자 화면에 최신 값이 표시됩니다.
 
-> 현재 백엔드에는 인증/권한 계층이 없습니다. 관리자 화면은 내부 운영·데모용이며,
-> 공개 배포 시 API 인증을 추가해야 합니다.
+> 관리자 계정은 백엔드의 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 환경 변수로
+> 생성·갱신됩니다. HTTPS 배포 시 `ADMIN_COOKIE_SECURE=true` 로 설정하세요.
+> 관리자 계정은 단일 역할이며, 세션 만료는 `ADMIN_SESSION_TTL_SECONDS` 로 조정합니다.
 
 카메라 패널은 드론이 아래 SRT 주소로 송출 중일 때 동작합니다.
 
@@ -86,7 +94,7 @@ MediaMTX 의 answer SDP 를 받아 `<video>` 에 연결합니다.
 
 | 변수 | 기본값 | 설명 |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | `http://localhost:8081` | 백엔드 API 주소 |
+| `VITE_API_BASE_URL` | 빈 값 | 백엔드 API 주소 (빈 값이면 same-origin `/api`) |
 
 ## 관련 레포
 
@@ -100,6 +108,7 @@ MediaMTX 의 answer SDP 를 받아 `<video>` 에 연결합니다.
 ```
 src/
 ├── App.tsx        # 내비게이션 + 모니터링 대시보드
+├── AdminAuthGate.tsx # 관리자 세션 확인·로그인
 ├── AdminPage.tsx  # 상품·재고·판매 상태 관리
 ├── StorePage.tsx  # 상품 목록·장바구니·주문
 ├── api.ts         # API 주소와 오류 파싱

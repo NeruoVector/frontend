@@ -1,4 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8081'
+// 빈 값이면 현재 오리진의 /api 를 사용한다. 개발 서버는 Vite proxy 로 백엔드에 연결된다.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export function apiUrl(path: string) {
   return `${API_BASE_URL}${path}`

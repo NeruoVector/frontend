@@ -5,6 +5,9 @@ import type { InventoryItem } from './types'
 
 type Props = {
   onOpenStore: () => void
+  username: string
+  onLogout: () => void
+  onSessionExpired: () => void
 }
 
 type ProductFormState = {
@@ -27,11 +30,31 @@ const emptyForm: ProductFormState = {
   active: true,
 }
 
-async function fetchInventory(signal?: AbortSignal) {
-  const response = await fetch(apiUrl('/api/v1/inventory?limit=500'), {
-    signal,
-    cache: 'no-store',
+async function adminFetch(
+  path: string,
+  init: RequestInit,
+  onUnauthorized: () => void,
+) {
+  const response = await fetch(apiUrl(path), {
+    ...init,
+    credentials: 'include',
   })
+  if (response.status === 401) {
+    onUnauthorized()
+    throw new Error('관리자 세션이 만료되었습니다. 다시 로그인하세요.')
+  }
+  return response
+}
+
+async function fetchInventory(
+  signal: AbortSignal | undefined,
+  onUnauthorized: () => void,
+) {
+  const response = await adminFetch(
+    '/api/v1/inventory?limit=500',
+    { signal, cache: 'no-store' },
+    onUnauthorized,
+  )
   if (!response.ok) throw new Error(await readApiError(response))
   return (await response.json()) as InventoryItem[]
 }
@@ -79,7 +102,12 @@ function StockEditor({
   )
 }
 
-export function AdminPage({ onOpenStore }: Props) {
+export function AdminPage({
+  onOpenStore,
+  username,
+  onLogout,
+  onSessionExpired,
+}: Props) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -95,7 +123,7 @@ export function AdminPage({ onOpenStore }: Props) {
 
     async function load() {
       try {
-        const list = await fetchInventory(controller.signal)
+        const list = await fetchInventory(controller.signal, onSessionExpired)
         setItems(list)
         setLoadError(null)
       } catch (error) {
@@ -107,12 +135,12 @@ export function AdminPage({ onOpenStore }: Props) {
 
     void load()
     return () => controller.abort()
-  }, [])
+  }, [onSessionExpired])
 
   async function refresh(showLoading = true) {
     if (showLoading) setLoading(true)
     try {
-      const list = await fetchInventory()
+      const list = await fetchInventory(undefined, onSessionExpired)
       setItems(list)
       setLoadError(null)
     } catch (error) {
@@ -192,16 +220,24 @@ export function AdminPage({ onOpenStore }: Props) {
     setSavingProduct(true)
     try {
       const response = target
-        ? await fetch(apiUrl(`/api/v1/inventory/${target.id}`), {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          })
-        : await fetch(apiUrl('/api/v1/inventory'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...payload, sku }),
-          })
+        ? await adminFetch(
+            `/api/v1/inventory/${target.id}`,
+            {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            },
+            onSessionExpired,
+          )
+        : await adminFetch(
+            '/api/v1/inventory',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...payload, sku }),
+            },
+            onSessionExpired,
+          )
 
       if (!response.ok) throw new Error(await readApiError(response))
       const saved = (await response.json()) as InventoryItem
@@ -228,11 +264,15 @@ export function AdminPage({ onOpenStore }: Props) {
     }
 
     try {
-      const response = await fetch(apiUrl(`/api/v1/inventory/${item.id}`), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock_quantity: stock }),
-      })
+      const response = await adminFetch(
+        `/api/v1/inventory/${item.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stock_quantity: stock }),
+        },
+        onSessionExpired,
+      )
       if (!response.ok) throw new Error(await readApiError(response))
       const saved = (await response.json()) as InventoryItem
       setNotice(`'${saved.name}' 재고를 ${saved.stock_quantity}개로 설정했습니다.`)
@@ -246,11 +286,15 @@ export function AdminPage({ onOpenStore }: Props) {
     setActionError(null)
     setNotice(null)
     try {
-      const response = await fetch(apiUrl(`/api/v1/inventory/${item.id}`), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: !item.active }),
-      })
+      const response = await adminFetch(
+        `/api/v1/inventory/${item.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ active: !item.active }),
+        },
+        onSessionExpired,
+      )
       if (!response.ok) throw new Error(await readApiError(response))
       setNotice(
         `'${item.name}' 상품을 ${item.active ? '판매 중지' : '판매 재개'}했습니다.`,
@@ -280,6 +324,12 @@ export function AdminPage({ onOpenStore }: Props) {
           </p>
         </div>
         <div className="page-actions">
+          <span className="admin-session">
+            관리자 <strong>{username}</strong>
+          </span>
+          <button className="button button-secondary" type="button" onClick={onLogout}>
+            로그아웃
+          </button>
           <button className="button button-secondary" type="button" onClick={onOpenStore}>
             스토어 열기
           </button>

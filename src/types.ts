@@ -1,3 +1,8 @@
+export type AdminSession = {
+  username: string
+  expires_at: string
+}
+
 export type InventoryItem = {
   id: string
   sku: string
