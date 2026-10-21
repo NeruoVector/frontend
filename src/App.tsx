@@ -12,6 +12,7 @@ type Detection = {
   latitude: number | null
   longitude: number | null
   distance_m: number | null
+  priority_level: number
   detected_at: string
   created_at: string
 }
@@ -56,6 +57,12 @@ function viewFromHash(): View {
 
 function formatTime(value: string | null) {
   return value ? new Date(value).toLocaleString('ko-KR') : '—'
+}
+
+function priorityLabel(level: number) {
+  if (level === 1) return '1단계 · 위험'
+  if (level === 3) return '3단계 · 낮음'
+  return '2단계 · 주의'
 }
 
 function formatBytes(bytes: number) {
@@ -169,24 +176,33 @@ function App() {
                       <th>객체</th>
                       <th>신뢰도</th>
                       <th>거리</th>
+                      <th>단계</th>
                       <th>위치</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {state.detections.map((d) => (
-                      <tr key={d.id}>
-                        <td>{formatTime(d.detected_at)}</td>
-                        <td>{d.drone_id}</td>
-                        <td>{d.label}</td>
-                        <td>{(d.confidence * 100).toFixed(1)}%</td>
-                        <td>{d.distance_m != null ? `${d.distance_m.toFixed(1)} m` : '—'}</td>
-                        <td>
-                          {d.latitude != null && d.longitude != null
-                            ? `${d.latitude.toFixed(5)}, ${d.longitude.toFixed(5)}`
-                            : '—'}
-                        </td>
-                      </tr>
-                    ))}
+                    {state.detections.map((d) => {
+                      const priority = d.priority_level ?? 2
+                      return (
+                        <tr key={d.id}>
+                          <td>{formatTime(d.detected_at)}</td>
+                          <td>{d.drone_id}</td>
+                          <td>{d.label}</td>
+                          <td>{(d.confidence * 100).toFixed(1)}%</td>
+                          <td>{d.distance_m != null ? `${d.distance_m.toFixed(1)} m` : '—'}</td>
+                          <td>
+                            <span className={`badge priority-${priority}`}>
+                              {priorityLabel(priority)}
+                            </span>
+                          </td>
+                          <td>
+                            {d.latitude != null && d.longitude != null
+                              ? `${d.latitude.toFixed(5)}, ${d.longitude.toFixed(5)}`
+                              : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

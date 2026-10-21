@@ -422,6 +422,24 @@ code {
   color: #fca5a5;
 }
 
+.priority-1 {
+  background: #3f1d1d;
+  color: #fca5a5;
+  white-space: nowrap;
+}
+
+.priority-2 {
+  background: #422006;
+  color: #fbbf24;
+  white-space: nowrap;
+}
+
+.priority-3 {
+  background: #064e3b;
+  color: #6ee7b7;
+  white-space: nowrap;
+}
+
 .admin-table td {
   vertical-align: middle;
 }
