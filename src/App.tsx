@@ -11,6 +11,7 @@ type Detection = {
   confidence: number
   latitude: number | null
   longitude: number | null
+  distance_m: number | null
   detected_at: string
   created_at: string
 }
@@ -167,6 +168,7 @@ function App() {
                       <th>드론</th>
                       <th>객체</th>
                       <th>신뢰도</th>
+                      <th>거리</th>
                       <th>위치</th>
                     </tr>
                   </thead>
@@ -177,6 +179,7 @@ function App() {
                         <td>{d.drone_id}</td>
                         <td>{d.label}</td>
                         <td>{(d.confidence * 100).toFixed(1)}%</td>
+                        <td>{d.distance_m != null ? `${d.distance_m.toFixed(1)} m` : '—'}</td>
                         <td>
                           {d.latitude != null && d.longitude != null
                             ? `${d.latitude.toFixed(5)}, ${d.longitude.toFixed(5)}`
