@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiUrl, errorMessage, readApiError } from './api'
 import { formatMoney } from './format'
-import type { CreatedOrder, InventoryItem } from './types'
+import type { CreatedOrder, InventoryItem, OrderJob } from './types'
 
 type Props = {
   onOpenAdmin: () => void
@@ -48,6 +48,53 @@ export function StorePage({ onOpenAdmin }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [order, setOrder] = useState<CreatedOrder | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [pendingJob, setPendingJob] = useState<string | null>(() =>
+    sessionStorage.getItem('pending-order-job'),
+  )
+
+  useEffect(() => {
+    if (pendingJob === null) return
+    const controller = new AbortController()
+    let timer: ReturnType<typeof setTimeout>
+
+    async function poll() {
+      try {
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(10000)])
+        const response = await fetch(apiUrl(`/api/v1/orders/jobs/${pendingJob}`), { signal })
+        if (!response.ok) throw new Error(await readApiError(response))
+        const job: OrderJob = await response.json()
+        if (job.status === 'completed' && job.order_id !== null) {
+          const detail = await fetch(apiUrl(`/api/v1/orders/${job.order_id}`), { signal })
+          if (!detail.ok) throw new Error(await readApiError(detail))
+          const created: CreatedOrder = await detail.json()
+          if (controller.signal.aborted) return
+          setOrder(created)
+          setCart({})
+          setCustomer({ ...emptyCustomer })
+          setSubmitError(null)
+        } else if (job.status === 'dead' || job.status === 'cancelled') {
+          setSubmitError(job.last_error || '주문을 완료하지 못했습니다. 다시 주문해주세요.')
+        } else {
+          setSubmitError(job.status === 'failed' ? '주문 처리를 재시도하고 있습니다.' : null)
+          timer = setTimeout(() => void poll(), 1000)
+          return
+        }
+        sessionStorage.removeItem('pending-order-job')
+        setPendingJob(null)
+        setRefreshKey((key) => key + 1)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        setSubmitError(`${errorMessage(error)} 주문은 접수되어 있으며 상태를 다시 확인합니다.`)
+        timer = setTimeout(() => void poll(), 5000)
+      }
+    }
+
+    void poll()
+    return () => {
+      controller.abort()
+      clearTimeout(timer)
+    }
+  }, [pendingJob])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -89,7 +136,7 @@ export function StorePage({ onOpenAdmin }: Props) {
     customer.name.trim() !== '' &&
     customer.phone.trim() !== '' &&
     customer.address.trim() !== '' &&
-    !submitting
+    !submitting && pendingJob === null
 
   function changeQuantity(item: InventoryItem, delta: number) {
     setCart((previous) => {
@@ -125,6 +172,7 @@ export function StorePage({ onOpenAdmin }: Props) {
 
   async function checkout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting || pendingJob !== null) return
     setSubmitError(null)
 
     if (cartItems.length === 0) {
@@ -142,7 +190,7 @@ export function StorePage({ onOpenAdmin }: Props) {
 
     setSubmitting(true)
     try {
-      const response = await fetch(apiUrl('/api/v1/orders'), {
+      const response = await fetch(apiUrl('/api/v1/orders/queue'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,11 +207,9 @@ export function StorePage({ onOpenAdmin }: Props) {
       })
       if (!response.ok) throw new Error(await readApiError(response))
 
-      const created = (await response.json()) as CreatedOrder
-      setOrder(created)
-      setCart({})
-      setCustomer({ ...emptyCustomer })
-      setRefreshKey((key) => key + 1)
+      const accepted: { readonly job: OrderJob } = await response.json()
+      sessionStorage.setItem('pending-order-job', accepted.job.id)
+      setPendingJob(accepted.job.id)
     } catch (error) {
       setSubmitError(errorMessage(error))
       setRefreshKey((key) => key + 1)
@@ -178,7 +224,7 @@ export function StorePage({ onOpenAdmin }: Props) {
         <div>
           <h2 className="page-title">스토어</h2>
           <p className="muted">
-            상품을 주문하면 주문 수량만큼 재고가 즉시 차감됩니다.
+            주문 처리가 완료되면 주문 수량만큼 재고가 차감됩니다.
           </p>
         </div>
         <button className="button button-secondary" type="button" onClick={onOpenAdmin}>
@@ -390,10 +436,16 @@ export function StorePage({ onOpenAdmin }: Props) {
                 />
               </label>
               <button className="button checkout-button" type="submit" disabled={!canCheckout}>
-                {submitting ? '주문 처리 중…' : '주문하기'}
+                {submitting || pendingJob !== null ? '주문 처리 중…' : '주문하기'}
               </button>
+              {pendingJob !== null && (
+                <p className="muted small" role="status">
+                  주문을 접수했습니다. 처리가 완료되면 주문 내역을 표시합니다.
+                  새로고침해도 처리 상태를 이어서 확인합니다.
+                </p>
+              )}
               <p className="muted small">
-                주문은 <code>pending_payment</code> 상태로 생성되며, 결제 완료 전
+                주문은 결제 대기 상태로 생성되며, 결제 완료 전
                 취소하면 재고가 복원됩니다.
               </p>
             </form>
