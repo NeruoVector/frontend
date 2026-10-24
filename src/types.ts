@@ -39,3 +39,10 @@ export type CreatedOrder = {
   payment: unknown
   created_at: string
 }
+
+export type OrderJob = {
+  readonly id: string
+  readonly status: 'queued' | 'processing' | 'completed' | 'failed' | 'dead' | 'cancelled'
+  readonly order_id: string | null
+  readonly last_error: string | null
+}
