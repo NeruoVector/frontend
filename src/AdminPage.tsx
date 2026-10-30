@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiUrl, errorMessage, readApiError } from './api'
 import { formatMoney } from './format'
+import { AdminStudentVerifications } from './AdminStudentVerifications'
+import { AdminFleetPanel } from './AdminFleetPanel'
 import type { InventoryItem } from './types'
 
 type Props = {
@@ -88,6 +90,7 @@ function StockEditor({
   return (
     <form className="stock-editor" onSubmit={(event) => void submit(event)}>
       <input
+        className="stock-input"
         type="number"
         min="0"
         step="1"
@@ -338,6 +341,10 @@ export function AdminPage({
           </button>
         </div>
       </div>
+
+      <AdminStudentVerifications onSessionExpired={onSessionExpired} />
+
+      <AdminFleetPanel onSessionExpired={onSessionExpired} />
 
       <div className="stat-grid">
         <div className="stat-card">

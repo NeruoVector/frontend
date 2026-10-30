@@ -16,7 +16,9 @@ RUN npm run build
 # ---- 서빙 스테이지 ---------------------------------------------------------
 FROM nginx:1.27-alpine AS runtime
 
+RUN apk add --no-cache ca-certificates
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/food-db-proxy.conf /etc/nginx/snippets/food-db-proxy.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80

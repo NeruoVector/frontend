@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { AdminAuthGate } from './AdminAuthGate'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { API_BASE_URL, apiUrl } from './api'
-import { StorePage } from './StorePage'
+import type { MapMarker } from './commerce/GoogleMapView'
 import './App.css'
+
+const AdminAuthGate = lazy(() => import('./AdminAuthGate').then((module) => ({ default: module.AdminAuthGate })))
+const StorePage = lazy(() => import('./StorePage').then((module) => ({ default: module.StorePage })))
+const GoogleMapView = lazy(() => import('./commerce/GoogleMapView').then((module) => ({ default: module.GoogleMapView })))
 
 type Detection = {
   id: string
@@ -112,7 +115,7 @@ function App() {
   }, [])
 
   return (
-    <main className="app">
+    <div className="app">
       <header className="header">
         <div className="header-row">
           <div>
@@ -146,14 +149,14 @@ function App() {
       </header>
 
       {view === 'dashboard' && (
-        <div className="grid">
+        <main className="grid">
           <section className="panel">
             <h2>최근 감지</h2>
 
-            {state.status === 'loading' && <p className="muted">불러오는 중…</p>}
+            {state.status === 'loading' && <p className="muted" role="status">불러오는 중…</p>}
 
             {state.status === 'error' && (
-              <p className="error">
+              <p className="error" role="alert">
                 데이터를 불러오지 못했습니다: {state.message}
                 <br />
                 <span className="muted">
@@ -214,14 +217,12 @@ function App() {
           <CameraPanel />
 
           <RecordingsPanel />
-        </div>
+        </main>
       )}
 
-      {view === 'store' && <StorePage onOpenAdmin={() => navigate('admin')} />}
-      {view === 'admin' && (
-        <AdminAuthGate onOpenStore={() => navigate('store')} />
-      )}
-    </main>
+      {view === 'store' && <Suspense fallback={<div className="page"><p className="muted" role="status">스토어를 불러오는 중…</p></div>}><StorePage onOpenAdmin={() => navigate('admin')} /></Suspense>}
+      {view === 'admin' && <Suspense fallback={<div className="page"><p className="muted" role="status">관리자 화면을 불러오는 중…</p></div>}><AdminAuthGate onOpenStore={() => navigate('store')} /></Suspense>}
+    </div>
   )
 }
 
@@ -254,6 +255,16 @@ function DroneStatusPanel() {
     }
   }, [])
 
+  const liveMarkers: MapMarker[] = statuses.flatMap((item) => {
+    if (!item.online || item.latitude === null || item.longitude === null) return []
+    return [{
+      id: item.drone_id,
+      label: `드론 ${item.drone_id}`,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    }]
+  })
+
   return (
     <section className="panel">
       <h2>드론 상태</h2>
@@ -261,9 +272,15 @@ function DroneStatusPanel() {
       {!error && statuses.length === 0 && (
         <p className="muted">아직 텔레메트리가 없습니다. MQTT telemetry 토픽을 확인하세요.</p>
       )}
+      {liveMarkers.length > 0 && (
+        <div className="dashboard-drone-map">
+          <Suspense fallback={<p className="muted" role="status">지도를 불러오는 중…</p>}><GoogleMapView markers={liveMarkers} label="실시간 드론 위치 지도" /></Suspense>
+          <p className="muted small">온라인 상태이며 좌표가 있는 드론만 표시합니다.</p>
+        </div>
+      )}
       {statuses.length > 0 && (
         <div className="scroll">
-          <table className="table">
+          <table className="table drone-status-table">
             <thead>
               <tr>
                 <th>드론</th>
@@ -415,7 +432,7 @@ function CameraPanel() {
       </div>
 
       <div className="video-wrap">
-        <video ref={videoRef} autoPlay playsInline muted />
+        <video ref={videoRef} autoPlay playsInline muted controls />
       </div>
       {message && <p className={message === '연결됨' ? 'muted' : 'error'}>{message}</p>}
       <p className="muted small">
