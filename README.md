@@ -20,7 +20,7 @@
 ```bash
 npm install
 cp .env.example .env
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5174
 ```
 
 개발 서버는 `/api` 요청을 `http://localhost:8081` 로 프록시합니다. `.env` 의

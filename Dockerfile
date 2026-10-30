@@ -11,6 +11,8 @@ COPY . .
 # 빈 값이면 브라우저가 같은 오리진(/api)으로 요청 → nginx 가 백엔드로 프록시
 ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ARG VITE_GOOGLE_MAPS_API_KEY=""
+ENV VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
 RUN npm run build
 
 # ---- 서빙 스테이지 ---------------------------------------------------------
