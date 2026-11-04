@@ -1,0 +1,26 @@
+.bottom-nav {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 68px;
+  padding-bottom: max(7px, env(safe-area-inset-bottom));
+  border-top: 0.667px solid var(--spot-line);
+  background: var(--spot-white);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 45px;
+  color: #b2b9bd;
+  font-size: 9px;
+}
+
+.bottom-nav-item.is-active {
+  color: var(--brand);
+  font-weight: 700;
+}

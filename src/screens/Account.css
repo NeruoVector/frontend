@@ -1,0 +1,366 @@
+/* ── 주문 내역 ── */
+.orders-tabs {
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 17px;
+}
+
+.order-card {
+  padding: 14px;
+  border-radius: var(--radius-control);
+  background: #fff;
+}
+
+.order-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 16px;
+  font-size: 10px;
+  color: #9ba6aa;
+}
+
+.order-status.is-live {
+  margin-top: 0;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  color: var(--brand);
+}
+
+.order-card h3 {
+  padding-top: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.order-card p {
+  padding: 8px 0 12px;
+  font-size: 11px;
+  color: #8a989c;
+}
+
+.order-card strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.order-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 11px;
+}
+
+.order-btn {
+  flex: 1;
+  min-height: 37px;
+  padding: 8px;
+  border: 0.667px solid #dce3e4;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+}
+
+.order-btn.is-soft {
+  border-color: var(--brand-soft);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+/* ── 마이 ── */
+.my-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 28px 22px 23px;
+}
+
+.my-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.my-profile h2 {
+  padding-bottom: 7px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.my-profile p {
+  font-size: 11px;
+  color: #8e9b9f;
+}
+
+.my-profile-more {
+  margin-left: auto;
+  color: #b4bcbf;
+}
+
+.my-stats-wrap {
+  padding: 0 22px;
+}
+
+.my-stats {
+  display: flex;
+  padding: 19px 8px;
+  border-radius: 8px;
+  background: var(--brand-tint);
+}
+
+.my-stats > div {
+  flex: 1;
+  text-align: center;
+}
+
+.my-stats > div + div {
+  border-left: 0.667px solid #ead5da;
+}
+
+.my-stats dt {
+  padding-bottom: 9px;
+  font-size: 10px;
+  color: #8b6a71;
+}
+
+.my-stats dd {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.my-stats small {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.my-gap {
+  margin-top: 25px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 58px;
+  padding: 16px 22px;
+  border-bottom: 0.667px solid #f0f3f3;
+  background: #fff;
+  text-align: left;
+}
+
+.menu-item-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  color: #8e9da0;
+}
+
+.menu-item-label {
+  flex: 1;
+  font-size: 13px;
+}
+
+.menu-item-value {
+  padding-right: 10px;
+  font-size: 11px;
+  color: #8e9da0;
+}
+
+.menu-item-chevron {
+  width: 18px;
+  color: #b4bcbf;
+}
+
+/* ── 설정 ── */
+.settings-group {
+  padding: 15px 22px 7px;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+  color: #8c9d9f;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-bottom: 0.667px solid #eff3f3;
+}
+
+.settings-toggle-row p {
+  font-size: 12px;
+}
+
+.settings-toggle-row small {
+  display: block;
+  padding-top: 6px;
+  font-size: 10px;
+  color: #99a7a9;
+}
+
+.toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 37px;
+  height: 22px;
+  border-radius: 15px;
+  background: #dfe5e5;
+  transition: background 0.15s;
+}
+
+.toggle span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.15s;
+}
+
+.toggle.is-on {
+  background: var(--brand);
+}
+
+.toggle.is-on span {
+  left: 18px;
+}
+
+.settings-list .menu-item {
+  height: 49px;
+  padding: 12px 22px;
+}
+
+.settings-footer {
+  padding: 29px;
+  font-size: 10px;
+  color: #b0baba;
+  text-align: center;
+}
+
+/* ── 결제수단 관리 ── */
+.paym {
+  padding: 22px;
+}
+
+.paym-desc {
+  padding-bottom: 22px;
+}
+
+.paym-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding-bottom: 13px;
+}
+
+.pay-card-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 156px;
+  padding: 29.5px 22px 0;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.pay-card-item.is-light {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+.pay-card-item.is-dark {
+  background: var(--brand-dark);
+  color: #fff8f9;
+}
+
+.pay-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 26px;
+}
+
+.pay-card-top strong {
+  font-size: 13px;
+}
+
+.pay-card-badge {
+  display: grid;
+  place-items: center;
+  min-height: 26px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 12.6px;
+}
+
+.pay-card-chip {
+  width: 27px;
+  height: 20px;
+  margin-top: 23px;
+  border: 0.667px solid #bccbc7;
+  border-radius: 5px;
+  background: #e2e5d4;
+}
+
+.pay-card-number {
+  margin-top: 12px;
+  font-family: 'Arimo', sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.pay-card-brand {
+  position: absolute;
+  right: 22px;
+  bottom: 24px;
+  font-size: 9px;
+  color: #e8b8c2;
+}
+
+.paym-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 66px;
+  border: 0.667px dashed #e5c2ca;
+  border-radius: var(--radius-control);
+  background: #fff;
+  font-size: 12px;
+  color: var(--brand-dark);
+}
+
+.paym-note {
+  padding: 18px 0 10px;
+  font-size: 10px;
+  line-height: 16px;
+  color: #929a9e;
+}

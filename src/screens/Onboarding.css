@@ -1,0 +1,372 @@
+/* ── 약관 동의 ── */
+.terms {
+  padding: 22px;
+}
+
+.brand-logo {
+  padding-top: 38px;
+  font-family: var(--font-brand);
+  font-size: 45px;
+  line-height: 56px;
+  letter-spacing: -2px;
+  color: var(--brand);
+}
+
+.terms-title {
+  padding-top: 26px;
+}
+
+.terms-desc {
+  padding-top: 12px;
+  margin-bottom: 34px;
+}
+
+.checkbox {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  border: 0.667px solid #d9e0e2;
+  background: var(--spot-white);
+  color: #fff;
+}
+
+.checkbox.is-checked {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.terms-all {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  height: 50px;
+  padding: 4px 14px;
+  border-radius: 6px;
+  background: var(--beige);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20.8px;
+  text-align: left;
+}
+
+.terms-list {
+  padding: 17px 3px;
+}
+
+.terms-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.terms-check {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 50px;
+  text-align: left;
+}
+
+.term-tag {
+  margin-right: -6px;
+  font-size: 11px;
+  line-height: 17.6px;
+  color: #99a2a6;
+}
+
+.term-tag.is-required {
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.term-label {
+  font-size: 13px;
+  line-height: 20.8px;
+}
+
+.terms-note {
+  font-size: 10px;
+  line-height: 17px;
+  color: #a3adb0;
+}
+
+/* ── 로그인 ── */
+.login-hero {
+  position: relative;
+  height: 325px;
+  padding: 35px 24px 25px;
+  overflow: hidden;
+  background: var(--brand-soft);
+}
+
+.login-title {
+  padding-top: 19px;
+  font-family: var(--font-brand);
+  font-size: 31px;
+  font-weight: 400;
+  line-height: 40.3px;
+  letter-spacing: -1px;
+}
+
+.login-desc {
+  padding-top: 14px;
+}
+
+.login-image {
+  position: absolute;
+  left: 200px;
+  top: 197px;
+  width: 180px;
+  height: 120px;
+  object-fit: contain;
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 35px 22px;
+}
+
+.login-subtitle {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.oauth-row {
+  display: flex;
+  gap: 20px;
+  padding-top: 16px;
+}
+
+.oauth {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.oauth-naver {
+  background: #03c75a;
+}
+
+.oauth-kakao {
+  background: #fee500;
+}
+
+.oauth-google {
+  background: #fff;
+}
+
+.login-phone {
+  margin-top: 24px;
+  border-radius: 6px;
+}
+
+.login-phone-label {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* ── 휴대폰 인증 ── */
+.phone {
+  padding: 32px 22px 22px;
+}
+
+.phone-title {
+  padding-top: 10px;
+}
+
+.phone-desc {
+  padding-top: 12px;
+}
+
+.field {
+  display: block;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.text-input {
+  display: block;
+  width: 100%;
+  height: 51.333px;
+  margin-top: 9px;
+  padding: 15px;
+  border: 0.667px solid var(--input-line);
+  border-radius: 6px;
+  background: var(--spot-white);
+  font-size: 14px;
+  outline: none;
+}
+
+.text-input::placeholder {
+  color: var(--placeholder);
+}
+
+.text-input:focus {
+  border-color: var(--brand);
+}
+
+.phone-field {
+  margin-top: 38px;
+}
+
+.phone-row {
+  display: flex;
+  gap: 8px;
+}
+
+.phone-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.phone-send {
+  flex-shrink: 0;
+  height: 51.333px;
+  margin-top: 9px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border-color: var(--input-line);
+  font-size: 12px;
+}
+
+.code-field {
+  margin-top: 37px;
+}
+
+.phone-notice {
+  margin-top: 43px;
+}
+
+/* ── 학교 등록 ── */
+.school {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px 22px 24px;
+}
+
+.school-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.school-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  color: var(--brand);
+}
+
+.school-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 34px;
+}
+
+.school-desc {
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--muted);
+}
+
+.school-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.school-label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.school-input {
+  height: 52px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--spot-white);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 22px;
+  outline: none;
+}
+
+.school-input::placeholder {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.school-input.is-error {
+  border-color: var(--brand);
+}
+
+.school-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.school-card.is-found {
+  background: var(--brand-soft);
+}
+
+.school-hint {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.school-hint svg {
+  flex-shrink: 0;
+}
+
+.school-found-label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  color: var(--brand);
+}
+
+.school-name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 27px;
+}
+
+.school-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.school-card-desc {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.school-card .btn-secondary {
+  border-color: var(--line);
+}
