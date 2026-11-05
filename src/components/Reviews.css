@@ -1,0 +1,10 @@
+.saved-reviews { display: grid; gap: 20px; }
+.saved-review { padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.saved-review header { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.saved-review header span { color: var(--brand); }
+.saved-review time { color: var(--muted); font-size: 12px; }
+.saved-review-content { margin-top: 12px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.6; }
+.saved-review-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.saved-review-photo { width: min(100%, 240px); height: auto; max-height: 300px; object-fit: contain; margin-top: 12px; border-radius: var(--radius-control); }
+.reviews-page { padding: 22px; }
+.reviews-page > .desc { margin-bottom: 16px; }

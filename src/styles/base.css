@@ -1,0 +1,93 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-kr);
+  color: var(--ink);
+  background: var(--spot-white);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+}
+
+/* 공통 텍스트 */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand);
+  letter-spacing: 0.2px;
+}
+
+.title-xl {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 31.9px;
+  letter-spacing: -1px;
+}
+
+.desc {
+  font-size: 12px;
+  line-height: 20.4px;
+  color: var(--spot-muted);
+}
+
+.notice-box {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 5px;
+  background: var(--beige);
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.notice-box svg {
+  flex-shrink: 0;
+}

@@ -1,0 +1,5 @@
+.live-camera { padding: 22px; }
+.live-camera h2 { margin-bottom: 8px; font-size: 16px; }
+.live-camera video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #1a2022; margin: 16px 0; border-radius: var(--radius-control); }
+.live-camera-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.live-camera-actions button { min-height: 44px; }

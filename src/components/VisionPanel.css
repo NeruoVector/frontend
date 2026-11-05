@@ -1,0 +1,10 @@
+.vision-panel { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.vision-panel h3 { margin: 0 0 8px; font-size: 15px; }
+.vision-panel .desc { overflow-wrap: anywhere; }
+.vision-panel-warning { margin-top: 10px; color: var(--brand); font-size: 13px; }
+.vision-detections { list-style: none; margin: 12px 0; padding: 0; }
+.vision-detections li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12px; overflow-wrap: anywhere; }
+.vision-detections li span:first-child { font-weight: 600; }
+.vision-image { margin-top: 12px; font-size: 13px; }
+.vision-image summary { display: list-item; min-height: 44px; padding: 12px 0; cursor: pointer; }
+.vision-image img { display: block; width: 100%; height: auto; border-radius: var(--radius-control); }

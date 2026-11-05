@@ -1,0 +1,26 @@
+/* Figma 변수 (교내 배달 · 사용자 앱) */
+:root {
+  --ink: #292524;
+  --muted: #78716c;
+  --surface: #faf7f2;
+  --line: #eae3dc;
+  --brand: #c21f3a;
+  --brand-dark: #8f172d;
+  --brand-soft: #fbe9ed;
+  --brand-tint: #fff5f7;
+  --spot-white: #ffffff;
+  --spot-muted: #879094;
+  --spot-line: #edf0f1;
+  --beige: #f5f0ea;
+  --input-line: #e1e6e8;
+  --placeholder: #afb6b9;
+  --disabled-bg: #e9e1d9;
+  --disabled-text: #8a7f76;
+  --radius-control: 7px;
+
+  --font-kr: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  --font-brand: 'Jua', 'Noto Sans KR', sans-serif;
+
+  --screen-w: 390px;
+  --screen-h: 844px;
+}

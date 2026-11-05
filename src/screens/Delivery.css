@@ -1,0 +1,434 @@
+/* ── 주문 완료 ── */
+.done-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 41px 22px 21px;
+}
+
+.done-icon {
+  display: grid;
+  place-items: center;
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.done-title {
+  padding-top: 23px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 34.8px;
+  letter-spacing: -1px;
+}
+
+.done-desc {
+  padding: 12px 0;
+}
+
+.done-eta {
+  margin-top: 9px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: var(--brand-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--brand);
+}
+
+.done-card-wrap {
+  padding: 0 22px;
+}
+
+.done-card {
+  padding: 20px 20px 8px;
+  border: 0.667px solid #e7edee;
+  border-radius: 8px;
+}
+
+.done-card h3 {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.done-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.done-card > div:first-of-type {
+  padding-top: 15px;
+}
+
+.done-card > div:last-of-type {
+  padding-bottom: 12px;
+}
+
+.done-card dt {
+  font-size: 11px;
+  color: #8d999e;
+}
+
+.done-card dd {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.done-number {
+  padding: 16px 22px 8px;
+  font-size: 10px;
+  color: #a4adb1;
+  text-align: center;
+}
+
+.done-pickup-hint { padding: 0 22px 22px; text-align: center; word-break: keep-all; }
+
+/* ── 배달 현황 ── */
+.track-head {
+  padding: 23px 22px 20px;
+}
+
+.track-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 22px 22px 0;
+  padding: 18px 0;
+  border-top: 1px solid var(--line, #ece6df);
+  border-bottom: 1px solid var(--line, #ece6df);
+}
+.track-metrics dt { color: var(--muted); font-size: 12px; }
+.track-metrics dd { margin: 6px 0 0; font-size: 20px; font-weight: 700; }
+.track-metrics > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.track-metrics > div:last-child:nth-child(odd) dd { font-size: 15px; }
+.mission-map { margin: 20px 22px; }
+.mission-map svg { display: block; width: 100%; background: var(--surface); }
+.mission-map figcaption { margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+
+.track-title {
+  padding-top: 10px;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 36.25px;
+  letter-spacing: -1px;
+}
+
+.track-desc {
+  padding-top: 7px;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 22px 16px;
+}
+
+.steps-labels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.steps-labels .is-current {
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.track-drone {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px 22px;
+  border-bottom: 0.667px solid var(--line);
+}
+
+.track-drone-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 39px;
+  height: 39px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.track-drone-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.track-drone-text strong {
+  font-size: 13px;
+}
+
+.track-drone-text small {
+  padding-top: 5px;
+  font-size: 10px;
+  color: #9aa5a9;
+}
+
+.track-call {
+  margin-left: auto;
+}
+
+.track-place {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 22px 28px;
+}
+
+.track-place strong {
+  font-size: 14px;
+}
+
+/* ── 도착 임박 ── */
+.arrive-hero {
+  padding: 26px 22px 23px;
+  background: var(--brand-soft);
+}
+
+.arrive-title {
+  padding-top: 10px;
+  font-family: var(--font-brand);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 36.4px;
+  letter-spacing: -1px;
+}
+
+.arrive-desc {
+  padding-top: 14px;
+  font-size: 12px;
+  line-height: 20.4px;
+  color: var(--brand-dark);
+}
+
+.arrive-place {
+  padding: 22px 22px 28px;
+}
+
+.arrive-place-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arrive-place-row h3 {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.arrive-place-row span {
+  font-size: 11px;
+  color: #919c9f;
+}
+
+.arrive-notice {
+  margin-top: 15px;
+  border-radius: 6px;
+}
+
+/* ── 수령 확인 ── */
+.recv-head {
+  padding: 22px 22px 0;
+}
+
+.recv-title {
+  padding-top: 10px;
+}
+
+.recv-desc {
+  padding-top: 12px;
+}
+
+.recv-card-wrap {
+  padding: 20px 22px 0;
+}
+
+.recv-card {
+  padding: 20px;
+  border: 0.667px solid #e2e9e9;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.recv-label {
+  font-size: 11px;
+  color: #8d9b9f;
+}
+
+.recv-code {
+  padding-top: 7px;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 46px;
+  letter-spacing: 5px;
+}
+
+.recv-hint {
+  padding-top: 2px;
+  font-size: 10px;
+  color: #9aa6a9;
+}
+
+.recv-check {
+  padding: 20px 22px;
+}
+
+.recv-check h3 {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.recv-check ol {
+  padding: 15px 0 0 18px;
+  list-style: decimal;
+  font-size: 11px;
+  line-height: 23.1px;
+  color: #809095;
+}
+
+/* ── 리뷰 작성 ── */
+.review-head {
+  padding: 25px 22px 3px;
+  text-align: center;
+}
+
+.review-head h3 {
+  padding-bottom: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.review-stars {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 25px 0;
+}
+
+.review-stars button {
+  font-size: 38px;
+  line-height: 38px;
+  color: #e6e0d8;
+}
+
+.review-stars button.is-on {
+  color: #ffbd3b;
+}
+
+.review-body {
+  padding: 0 22px 28px;
+}
+
+.review-field span {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.review-field textarea {
+  display: block;
+  width: 100%;
+  height: 120px;
+  margin-top: 9px;
+  padding: 15px;
+  border: 0.667px solid var(--input-line);
+  border-radius: 6px;
+  resize: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22.4px;
+  outline: none;
+}
+
+.review-field textarea:focus {
+  border-color: var(--brand);
+}
+
+.review-count {
+  padding-top: 8px;
+  font-size: 10px;
+  color: #9badae;
+}
+
+.review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding-top: 17px;
+}
+
+.review-tag {
+  padding: 9px 10px;
+  border: 0.667px solid #e1e8e8;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 10px;
+  color: #8f9d9f;
+}
+
+.review-tag.is-on {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.review-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 75px;
+  height: 75px;
+  margin-top: 13px;
+  border: 0.667px dashed #d7e2e2;
+  border-radius: 6px;
+  background: #f9fbfb center / cover no-repeat;
+  font-size: 10px;
+  color: #9aaaae;
+  cursor: pointer;
+}
+
+.review-photo input {
+  display: none;
+}
+
+.review-note {
+  padding: 20px 0 10px;
+  font-size: 10px;
+  line-height: 16px;
+  color: #929a9e;
+}
+
+.track-telemetry {
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.track-telemetry dt { font-size: 12px; color: var(--muted); }
+.track-telemetry dd { margin-top: 4px; font-size: 14px; font-weight: 600; }
+
+.track-monitor { padding: 0 22px 20px; }
+.track-monitor a { display: inline-block; margin-top: 8px; }
+
+.review-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.review-feedback { padding: 16px 22px; font-size: 14px; }
+.review-photo-note { margin-top: 8px; color: var(--muted); font-size: 12px; }
