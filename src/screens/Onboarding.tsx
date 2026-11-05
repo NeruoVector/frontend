@@ -12,11 +12,62 @@ import './Onboarding.css'
 
 type TermKey = 'service' | 'privacy' | 'marketing'
 
-const TERMS: { key: TermKey; label: string; required: boolean }[] = [
-  { key: 'service', label: '서비스 이용약관', required: true },
-  { key: 'privacy', label: '개인정보 수집 및 이용', required: true },
-  { key: 'marketing', label: '혜택 및 이벤트 알림 수신', required: false },
+const TERMS: { key: TermKey; label: string; required: boolean; body: string[] }[] = [
+  {
+    key: 'service',
+    label: '서비스 이용약관',
+    required: true,
+    body: [
+      '교내 배달은 선린인터넷고등학교 구성원이 매점 상품을 주문하고 교내 지정 장소에서 드론으로 받을 수 있게 하는 시범 서비스입니다.',
+      '결제는 테스트 결제이며 실제로 청구되지 않습니다.',
+      '도착 알림을 받으면 선택한 수령 장소에서 상품을 받아 주세요.',
+      '날씨나 안전 점검 결과에 따라 비행이 지연되거나 취소될 수 있습니다.',
+    ],
+  },
+  {
+    key: 'privacy',
+    label: '개인정보 수집 및 이용',
+    required: true,
+    body: [
+      '수집 항목: 아이디, 이름, 휴대폰 번호, 주문 내역, 수령 장소',
+      '이용 목적: 주문 처리, 배송 안내, 본인 확인',
+      '보유 기간: 회원 탈퇴 또는 시범 운영 종료 시까지',
+      '동의하지 않을 수 있지만, 동의하지 않으면 주문할 수 없습니다.',
+    ],
+  },
+  {
+    key: 'marketing',
+    label: '혜택 및 이벤트 알림 수신',
+    required: false,
+    body: [
+      '신상품, 할인, 이벤트 소식을 앱 알림으로 보내 드립니다.',
+      '동의하지 않아도 서비스를 이용할 수 있으며, 설정에서 언제든 끌 수 있습니다.',
+    ],
+  },
 ]
+
+function TermsSheet({ term, onClose }: { term: (typeof TERMS)[number]; onClose: () => void }) {
+  return (
+    <div className="terms-sheet-backdrop" onClick={onClose} onKeyDown={(event) => { if (event.key === 'Escape') onClose() }}>
+      <section
+        className="terms-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="terms-sheet-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id="terms-sheet-title" className="terms-sheet-title">
+          <span className={term.required ? 'term-tag is-required' : 'term-tag'}>{term.required ? '필수' : '선택'}</span>
+          {term.label}
+        </h2>
+        <ul className="terms-sheet-body">
+          {term.body.map((line) => <li key={line}>{line}</li>)}
+        </ul>
+        <Button onClick={onClose} autoFocus>확인</Button>
+      </section>
+    </div>
+  )
+}
 
 function Checkbox({ checked }: { checked: boolean }) {
   return <span className={`checkbox ${checked ? 'is-checked' : ''}`}>{checked && <CheckIcon size={21} />}</span>
@@ -24,6 +75,9 @@ function Checkbox({ checked }: { checked: boolean }) {
 
 export function TermsScreen() {
   const { navigate } = useRouter()
+  const { customer } = useAuth()
+  const [openTerm, setOpenTerm] = useState<TermKey | null>(null)
+  const viewing = TERMS.find((t) => t.key === openTerm)
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({
     service: true,
     privacy: true,
@@ -37,9 +91,10 @@ export function TermsScreen() {
     setAgreed({ service: next, privacy: next, marketing: next })
   }
 
+  // 처음 들어온 사용자는 뒤로 가기로 동의를 건너뛸 수 없다. 로그인 후 마이 > 이용약관으로 온 경우에만 뒤로 가기를 보여 준다.
   return (
     <Screen
-      header={<Header title="서비스 이용 동의" />}
+      header={<Header title="서비스 이용 동의" showBack={customer !== null} />}
       footer={
         <Footer>
           <Button disabled={!requiredAgreed} onClick={() => navigate('login')}>
@@ -81,7 +136,13 @@ export function TermsScreen() {
                 </span>
                 <span className="term-label">{term.label}</span>
               </button>
-              <button type="button" className="icon-button" aria-label={`${term.label} 보기`}>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`${term.label} 보기`}
+                aria-haspopup="dialog"
+                onClick={() => setOpenTerm(term.key)}
+              >
                 <ChevronRightIcon />
               </button>
             </li>
@@ -90,6 +151,7 @@ export function TermsScreen() {
 
         <p className="terms-note">선택 항목에 동의하지 않아도 서비스를 이용할 수 있어요.</p>
       </div>
+      {viewing && <TermsSheet term={viewing} onClose={() => setOpenTerm(null)} />}
     </Screen>
   )
 }

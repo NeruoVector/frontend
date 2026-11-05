@@ -87,7 +87,20 @@ function CurrentScreen() {
   const { route, navigate } = useRouter()
   const { order, loading } = useAppState()
   const needsOrder = ['order-complete', 'tracking', 'arriving', 'received', 'review'].includes(route)
-  if (needsOrder && !order) return <Screen header={<Header title="주문 확인" />}><p className="desc">{loading ? '주문을 불러오는 중…' : '선택한 주문이 없습니다.'}</p><Button onClick={() => navigate('home')}>상품 보러 가기</Button></Screen>
+  // 다른 화면과 같은 .device-screen 틀 안에 그려야 폰 크기·여백이 맞는다.
+  if (needsOrder && !order) return (
+    <div className="device-screen" key={route}>
+      <Screen header={<Header title={SCREENS[route].label} />}>
+        <div className="order-empty">
+          <p className="desc" role="status">{loading ? '주문을 불러오는 중…' : '아직 진행 중인 주문이 없어요.'}</p>
+          {!loading && <>
+            <Button onClick={() => navigate('home')}>상품 보러 가기</Button>
+            <Button variant="secondary" onClick={() => navigate('orders')}>주문 내역 보기</Button>
+          </>}
+        </div>
+      </Screen>
+    </div>
+  )
   // key로 화면이 바뀔 때마다 입력 상태를 초기화하고 스크롤을 맨 위로 돌린다.
   return (
     <div className="device-screen" key={route}>
