@@ -59,3 +59,23 @@ and desc. Required states: provider availability pending/unavailable/error with 
 redirect-in-progress disabling, cancelled/expired/failed callback feedback, and ordinary
 password-login fallback. Layout: preserve existing stacked login-actions and oauth-row;
 .screen-body remains the scroll owner, with the desktop phone frame unchanged.
+
+Responsive student shop: primary action remains adding an available item, then ordering
+an available cart. Priorities: product identity, stock status, then price and quantity.
+Required content: full product names, descriptions, photos, prices, 품절 labels, quantity
+controls, cart removal and checkout feedback. No text is truncated to fit the grid.
+Layout: catalog - repeat variable-length products within the available screen -> card-grid
+(https://github.com/changeroa/StyleGallery/blob/main/patterns/grid-repetition/card-grid.md)
+with bottom-aligned prices; scroll owner: .screen-body; anti-patterns: fixed-height names,
+viewport queries that expand the desktop phone frame, and unbroken text forcing overflow.
+The catalog section is the query container: content widths below 300px use two columns,
+300-439px use three, 440-599px use four, and 600px or more use five. Existing 390px
+desktop phone frame, 22px screen insets, 12px grid gaps, 132px photos, type and color
+tokens remain. Shop category, quantity and remove controls use 44px touch targets;
+quantity rows wrap with 12px gaps. Keyboard focus uses the existing brand focus ring.
+Product detail headings balance their lines and keep Korean words together.
+Checkout contact fields use scoped 100% width inputs with a 44px minimum height,
+12px field spacing and 14px text; they remain readable even when login CSS has not
+been loaded. Payment method and location-change controls also have 44px targets.
+Left out: new desktop navigation, a different theme, decorative status components,
+and changes to inventory, payment or stock validation.
