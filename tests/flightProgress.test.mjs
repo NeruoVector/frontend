@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { missionSchema } from '../src/api.ts'
-import { freshSimulation, matchingMission, flightDistance, flightEta, flightStep } from '../src/flightProgress.ts'
+import { canConfirmReceipt, freshSimulation, matchingMission, flightDistance, flightEta, flightStep } from '../src/flightProgress.ts'
 
 const id = '11111111-1111-4111-8111-111111111111'
 const mission = { order_id: id, destination_id: 'lobby', phase: 'outbound', route_enu: [[0, 0, 18], [30, 37, 18], [0, 0, 18], [0, 0, .15]], waypoint_index: 1, remaining_distance_m: 110, eta_seconds: 115, delivery_distance_m: 42.3, delivery_eta_seconds: 43, arrived: false }
@@ -55,4 +55,17 @@ test('an airborne safety hold keeps the flight step instead of reverting to prep
   assert.equal(flightStep('paid', false, true, true), 2)
   assert.equal(flightStep('paid', false, true, false), 1)
   assert.equal(flightStep('paid', true, false, false), 3)
+})
+
+test('receipt requires fresh matching landed state and does not equal home completion', () => {
+  const waiting = { ...state, armed: false, mission: { ...mission, phase: 'awaiting_receipt', arrived: true, received: false } }
+  const order = { id, status: 'paid' }
+  assert.equal(canConfirmReceipt(waiting, order, 101000), true)
+  assert.equal(canConfirmReceipt({ ...waiting, armed: true }, order, 101000), false)
+  assert.equal(canConfirmReceipt(waiting, order, 106000), false)
+  assert.equal(canConfirmReceipt(waiting, { ...order, id: 'other-order' }, 101000), false)
+  for (const phase of ['outbound', 'delivery_landing', 'return_takeoff', 'returning', 'landing', 'completed']) {
+    assert.equal(canConfirmReceipt({ ...waiting, mission: { ...waiting.mission, phase } }, order, 101000), false)
+  }
+  assert.equal(flightStep('paid', false, true, true), 2)
 })

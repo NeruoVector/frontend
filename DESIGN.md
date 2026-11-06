@@ -40,6 +40,18 @@ Layout: existing mobile Screen body owns scroll; fixed Header, stacked saved til
 then add action and type buttons; existing desktop phone frame. Reuse pay-card-item,
 Button and existing tokens. Controls44px minimum targets,12px spacing,13px text.
 
+Receipt flow: primary action is 수령 확인, available only for fresh matching telemetry
+at awaiting_receipt, arrived and disarmed. Priorities: landing/receipt/return status,
+pickup code entry, then order details. Required: place, four-digit order number,
+password explanation, input validation, pending/error/success, tracking navigation,
+and distinct home-flight completion. Receipt success never means flight completion.
+Left out: countdown-driven receipt, decorative status cards, placeholder confirmations.
+Layout: tracking details and receipt form - narrow independent fields -> stack
+(https://github.com/changeroa/StyleGallery/blob/main/patterns/stacking/stack.md);
+scroll owner: .screen-body; anti-patterns: squeezed sibling text columns, fixed-height
+help text and nested vertical scrollers. Reuse 22px screen inset, 12px field gaps,
+14px field text, 44px minimum inputs, 7px control radius and existing color tokens.
+
 Configured social login: primary action remains account login. Existing Kakao/Naver/Google
 44px icon buttons activate only when the server reports that provider configured; secrets
 never enter the browser bundle. Reuse oauth-row, oauth brand classes, Button, auth-error

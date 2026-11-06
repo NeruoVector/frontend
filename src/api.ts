@@ -18,11 +18,12 @@ const orderDetailSchema = orderSchema.extend({ pickup_code: z.string().regex(/^\
 const enuPoint = z.tuple([z.number().finite(), z.number().finite(), z.number().finite()]);
 export const missionSchema = z.object({
   order_id: z.uuid(), destination_id: z.string(),
-  phase: z.enum(['outbound', 'arrival_hold', 'returning', 'landing', 'completed']),
+  phase: z.enum(['outbound', 'delivery_landing', 'awaiting_receipt', 'arrival_hold', 'return_takeoff', 'returning', 'landing', 'completed']),
   route_enu: z.array(enuPoint).min(2).max(32), waypoint_index: z.number().int().nonnegative(),
   remaining_distance_m: z.number().finite().nonnegative(), eta_seconds: z.number().finite().nonnegative().nullable(),
   delivery_distance_m: z.number().finite().nonnegative(), delivery_eta_seconds: z.number().finite().nonnegative().nullable(),
-  arrived: z.boolean(),
+  arrived: z.boolean(), received: z.boolean().default(false),
+  destination_enu: enuPoint.optional(),
 });
 const simSchema = z.object({ timestamp: z.number().finite(), mode: z.string(), drone_id: z.string(), position_enu: enuPoint.nullable(), armed: z.boolean(), order_id: z.string().nullable().optional(), completed_order_id: z.string().nullable().optional(), mission: missionSchema.nullable().optional() });
 export type Item = z.infer<typeof itemSchema>;
@@ -33,6 +34,8 @@ export type Payment = z.infer<typeof paymentSchema>;
 export type SimulationState = z.infer<typeof simSchema>;
 export type Mission = z.infer<typeof missionSchema>;
 export type CreateOrder = { readonly customer_name: string; readonly customer_phone: string; readonly items: readonly { readonly item_id: string; readonly quantity: number }[]; readonly delivery_address: string; readonly delivery_detail?: string; readonly notes?: string };
+export const receiptInputSchema = z.object({ confirmed: z.literal(true) }).strict();
+type ReceiptInput = z.infer<typeof receiptInputSchema>;
 
 const reviewSchema = z.object({
   id: z.uuid(), order_id: z.uuid(), rating: z.number().int().min(1).max(5), content: z.string(),
@@ -55,7 +58,7 @@ export class ApiError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status; }
 }
 
-async function request<T>(path: string, schema: z.ZodType<T>, json?: CardMetadataInput | CreateOrder | CreateReview | LoginInput | RegisterInput | { readonly method: string }): Promise<T> {
+async function request<T>(path: string, schema: z.ZodType<T>, json?: ReceiptInput | CardMetadataInput | CreateOrder | CreateReview | LoginInput | RegisterInput | { readonly method: string }): Promise<T> {
   try {
     const response = json === undefined ? await http.get(new URL(`${BASE_URL}${path}`, globalThis.location?.origin ?? 'http://localhost').href) : await http.post(new URL(`${BASE_URL}${path}`, globalThis.location?.origin ?? 'http://localhost').href, { json });
     return schema.parse(await response.json());
@@ -74,6 +77,7 @@ export type LoginInput = { readonly username: string; readonly password: string 
 export type RegisterInput = LoginInput & { readonly name: string; readonly phone: string };
 
 export const api = {
+  confirmReceipt: (id: string) => request(`/api/v1/orders/${encodeURIComponent(id)}/receipt`, z.object({ order_id: z.literal(id), received: z.literal(true) }), { confirmed: true }),
   cards: () => request('/api/v1/auth/cards', cardMetadataListSchema),
   addCard: (input: CardMetadataInput) => request('/api/v1/auth/cards', cardMetadataSchema, cardMetadataInputSchema.parse(input)),
   removeCard: async (id: string) => {

@@ -1,4 +1,25 @@
 import type { Mission, SimulationState } from './api.ts'
+import { canHaveFlightCompletion } from './orderFlightCompletion.ts'
+
+export function canConfirmReceipt(state: SimulationState | null, order: { readonly id: string; readonly status: string }, nowMs: number): boolean {
+  const mission = matchingMission(state, order.id, nowMs)
+  return canHaveFlightCompletion(order.status) && state?.order_id === order.id && state.armed === false
+    && mission?.phase === 'awaiting_receipt' && mission.arrived && !mission.received
+}
+
+export function missionStatus(phase: Mission['phase']): string {
+  switch (phase) {
+    case 'outbound': return '수령 장소로 비행 중'
+    case 'delivery_landing': return '수령 장소에 착륙 중'
+    case 'awaiting_receipt': return '수령 장소 착륙 완료 · 수령 확인 대기 중'
+    case 'arrival_hold': return '수령 지점에서 대기 중'
+    case 'return_takeoff': return '수령 확인 완료 · 귀환을 위해 이륙 중'
+    case 'returning': return '수령 확인 완료 · 출발지로 귀환 중'
+    case 'landing': return '출발지에 착륙 중'
+    case 'completed': return '출발지 착륙 완료 · 비행 기록 확인 중'
+    default: { const unreachable: never = phase; return unreachable }
+  }
+}
 
 export function freshSimulation(state: SimulationState | null, nowMs: number): boolean {
   if (state === null) return false
