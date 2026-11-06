@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Button, Footer, Header, Screen } from '../components/Layout.tsx'
-import { CheckIcon, ChevronRightIcon, InfoIcon, PhoneIcon } from '../components/Icons.tsx'
+import { CheckIcon, ChevronRightIcon, InfoIcon } from '../components/Icons.tsx'
 import { useRouter } from '../router.tsx'
+import { useAuth } from '../auth.tsx'
+import { ApiError } from '../api.ts'
+import { oauthError } from '../oauth.ts'
+import { OAuthButtons } from '../components/OAuthButtons.tsx'
+import { useAppState } from '../store.tsx'
 import snackImage from '../assets/login-snacks.png'
 import './Onboarding.css'
 
@@ -9,11 +14,112 @@ import './Onboarding.css'
 
 type TermKey = 'service' | 'privacy' | 'marketing'
 
-const TERMS: { key: TermKey; label: string; required: boolean }[] = [
-  { key: 'service', label: '서비스 이용약관', required: true },
-  { key: 'privacy', label: '개인정보 수집 및 이용', required: true },
-  { key: 'marketing', label: '혜택 및 이벤트 알림 수신', required: false },
+const TERMS: { key: TermKey; label: string; required: boolean; body: string[] }[] = [
+  {
+    key: 'service',
+    label: '서비스 이용약관',
+    required: true,
+    body: [
+      '교내 배달은 매점 상품 주문과 교내 지정 장소까지의 드론 배송 과정을 체험하는 데모입니다. 실제 배송은 제공하지 않습니다.',
+      '결제는 테스트 결제이며 실제로 청구되지 않습니다.',
+      '주문 후 표시되는 배송 상태와 도착 안내는 시뮬레이션입니다.',
+      '이 안내는 현재 데모 기능에 대한 설명입니다.',
+    ],
+  },
+  {
+    key: 'privacy',
+    label: '개인정보 수집 및 이용',
+    required: true,
+    body: [
+      '수집 항목: 아이디, 이름, 휴대폰 번호, 주문 내역, 수령 장소',
+      '입력한 계정 정보와 연락처는 데모의 계정 및 주문 기능에 사용됩니다. 휴대폰 문자 인증은 제공하지 않습니다.',
+      '이 데모에는 회원 탈퇴나 개인정보 자동 삭제 기능이 구현되어 있지 않습니다.',
+      '이 화면의 선택은 데모 화면에서만 관리되며, 서버에 동의 기록으로 저장되지 않습니다.',
+    ],
+  },
+  {
+    key: 'marketing',
+    label: '혜택 및 이벤트 알림 수신',
+    required: false,
+    body: [
+      '혜택 및 이벤트 알림은 아직 제공하지 않습니다. 이 항목은 데모의 선택 화면입니다.',
+      '선택 여부와 관계없이 데모를 이용할 수 있으며, 실제 마케팅 알림은 발송되지 않습니다.',
+    ],
+  },
 ]
+
+function TermsSheet({ term, onClose }: { term: (typeof TERMS)[number]; onClose: () => void }) {
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const confirmRef = useRef<HTMLButtonElement>(null)
+
+  useLayoutEffect(() => {
+    const backdrop = backdropRef.current
+    if (!backdrop) return
+    const opener = document.activeElement
+    const background: { element: HTMLElement; inert: boolean }[] = []
+    let branch: HTMLElement = backdrop
+    while (branch.parentElement) {
+      for (const sibling of branch.parentElement.children) {
+        if (sibling instanceof HTMLElement && sibling !== branch) {
+          background.push({ element: sibling, inert: sibling.inert })
+          sibling.inert = true
+        }
+      }
+      branch = branch.parentElement
+      if (branch === document.body) break
+    }
+    const scrollContainer = backdrop.closest<HTMLElement>('.screen-body')
+    const previousOverflow = scrollContainer?.style.overflow ?? ''
+    if (scrollContainer) scrollContainer.style.overflow = 'hidden'
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        onClose()
+      } else if (event.key === 'Tab') {
+        // The confirmation button is this read-only sheet's only tab stop.
+        event.preventDefault()
+        confirmRef.current?.focus({ preventScroll: true })
+      }
+    }
+    const containFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !backdrop.contains(event.target)) {
+        confirmRef.current?.focus({ preventScroll: true })
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown, true)
+    document.addEventListener('focusin', containFocus)
+    confirmRef.current?.focus({ preventScroll: true })
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true)
+      document.removeEventListener('focusin', containFocus)
+      for (const { element, inert } of background) element.inert = inert
+      if (scrollContainer) scrollContainer.style.overflow = previousOverflow
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true })
+    }
+  }, [onClose])
+
+  return (
+    <div ref={backdropRef} className="terms-sheet-backdrop" onClick={onClose}>
+      <section
+        className="terms-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="terms-sheet-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id="terms-sheet-title" className="terms-sheet-title">
+          <span className={term.required ? 'term-tag is-required' : 'term-tag'}>{term.required ? '필수' : '선택'}</span>
+          {term.label}
+        </h2>
+        <ul className="terms-sheet-body">
+          {term.body.map((line) => <li key={line}>{line}</li>)}
+        </ul>
+        <button ref={confirmRef} type="button" className="btn btn-primary btn-large btn-block" onClick={onClose}>확인</button>
+      </section>
+    </div>
+  )
+}
 
 function Checkbox({ checked }: { checked: boolean }) {
   return <span className={`checkbox ${checked ? 'is-checked' : ''}`}>{checked && <CheckIcon size={21} />}</span>
@@ -21,6 +127,9 @@ function Checkbox({ checked }: { checked: boolean }) {
 
 export function TermsScreen() {
   const { navigate } = useRouter()
+  const { customer } = useAuth()
+  const [openTerm, setOpenTerm] = useState<TermKey | null>(null)
+  const viewing = TERMS.find((t) => t.key === openTerm)
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({
     service: true,
     privacy: true,
@@ -34,9 +143,10 @@ export function TermsScreen() {
     setAgreed({ service: next, privacy: next, marketing: next })
   }
 
+  // 로그인 후 마이 > 이용약관으로 온 경우에만 뒤로 가기를 보여 준다.
   return (
     <Screen
-      header={<Header title="서비스 이용 동의" />}
+      header={<Header title="서비스 이용 동의" showBack={customer !== null} />}
       footer={
         <Footer>
           <Button disabled={!requiredAgreed} onClick={() => navigate('login')}>
@@ -78,7 +188,13 @@ export function TermsScreen() {
                 </span>
                 <span className="term-label">{term.label}</span>
               </button>
-              <button type="button" className="icon-button" aria-label={`${term.label} 보기`}>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`${term.label} 보기`}
+                aria-haspopup="dialog"
+                onClick={() => setOpenTerm(term.key)}
+              >
                 <ChevronRightIcon />
               </button>
             </li>
@@ -87,6 +203,7 @@ export function TermsScreen() {
 
         <p className="terms-note">선택 항목에 동의하지 않아도 서비스를 이용할 수 있어요.</p>
       </div>
+      {viewing && <TermsSheet term={viewing} onClose={() => setOpenTerm(null)} />}
     </Screen>
   )
 }
@@ -125,46 +242,49 @@ function GoogleLogo() {
 
 export function LoginScreen() {
   const { navigate } = useRouter()
-  return (
-    <Screen header={<Header />}>
-      <section className="login-hero">
-        <p className="eyebrow">교내 드론 배달</p>
-        <h1 className="login-title">
-          매점 가는 시간까지
-          <br />
-          아껴드릴게요.
-        </h1>
-        <p className="desc login-desc">
-          먹고 싶은 메뉴를 고르면
-          <br />
-          약속한 곳으로 가져다드려요.
-        </p>
-        <img className="login-image" src={snackImage} alt="매점 간식" />
-      </section>
-
-      <section className="login-actions">
-        <h3 className="login-subtitle">간편하게 시작하세요</h3>
-        <div className="oauth-row">
-          <button type="button" className="oauth oauth-naver" aria-label="네이버로 시작하기" onClick={() => navigate('phone')}>
-            <NaverLogo />
-          </button>
-          <button type="button" className="oauth oauth-kakao" aria-label="카카오로 시작하기" onClick={() => navigate('phone')}>
-            <KakaoLogo />
-          </button>
-          <button type="button" className="oauth oauth-google" aria-label="구글로 시작하기" onClick={() => navigate('phone')}>
-            <GoogleLogo />
-          </button>
-        </div>
-        <Button variant="secondary" size="medium" className="login-phone" onClick={() => navigate('phone')}>
-          <PhoneIcon />
-          <span className="login-phone-label">휴대폰 번호로 시작하기</span>
-        </Button>
-        <Button variant="text" onClick={() => navigate('home')}>
-          메뉴 먼저 둘러보기
-        </Button>
-      </section>
-    </Screen>
-  )
+  const auth = useAuth()
+  const [signup, setSignup] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(() => oauthError(location.search))
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy) return
+    setBusy(true); setError(null)
+    try {
+      if (signup) await auth.register({ username: username.trim(), password, name: name.trim(), phone: phone.replace(/\D/g, '') })
+      else await auth.login({ username: username.trim(), password })
+      setPassword('')
+      navigate('home', { replace: true })
+    } catch (cause) {
+      setError(cause instanceof ApiError && cause.status === 401 ? '아이디 또는 비밀번호를 확인해 주세요.' : cause instanceof ApiError && cause.status === 409 ? '이미 사용 중인 아이디입니다.' : cause instanceof Error ? cause.message : '로그인하지 못했습니다.')
+    } finally { setBusy(false) }
+  }
+  return <Screen header={<Header title={signup ? '회원가입' : '로그인'} />}>
+    <section className={`login-hero${signup ? ' is-signup' : ''}`}>
+      <h1 className="login-title">학교 안 배달,<br />내 계정으로 시작하세요.</h1>
+      <img className="login-image" src={snackImage} alt="매점 간식" />
+    </section>
+    <section className="login-actions">
+      <form className="auth-form" onSubmit={event => void submit(event)} aria-busy={busy}>
+        <label className="field">아이디<input className="text-input" autoComplete="username" required minLength={4} maxLength={32} pattern="[A-Za-z0-9_\-]+" title="영문, 숫자, 밑줄 또는 하이픈 4~32자" aria-describedby={signup ? 'auth-username-hint' : undefined} value={username} onChange={event => setUsername(event.target.value)} /></label>
+        {signup && <p id="auth-username-hint" className="auth-hint">영문, 숫자, 밑줄 또는 하이픈 4~32자</p>}
+        <label className="field">계정 비밀번호<input className="text-input" type="password" autoComplete={signup ? 'new-password' : 'current-password'} required minLength={signup ? 8 : 1} maxLength={128} aria-describedby={signup ? 'auth-password-hint' : undefined} value={password} onChange={event => setPassword(event.target.value)} /></label>
+        {signup && <><p id="auth-password-hint" className="auth-hint">계정 비밀번호는 8자 이상 입력해 주세요.</p><label className="field">이름<input className="text-input" autoComplete="name" required maxLength={50} value={name} onChange={event => setName(event.target.value)} /></label>
+          <label className="field">휴대폰 번호<input className="text-input" autoComplete="tel" inputMode="tel" required pattern="0[0-9]{10}" placeholder="01012345678" value={phone} onChange={event => setPhone(event.target.value.replace(/\D/g, '').slice(0, 11))} /></label>
+          <p className="desc">주문 안내용 연락처이며 문자 인증은 제공하지 않습니다.</p></>}
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <Button type="submit" disabled={busy || auth.loading}>{busy ? '처리 중…' : signup ? '회원가입' : '로그인'}</Button>
+      </form>
+      <Button variant="secondary" onClick={() => { setSignup(!signup); setPassword(''); setError(null) }}>{signup ? '로그인으로 돌아가기' : '새 계정 만들기'}</Button>
+      <OAuthButtons icons={{ naver: <NaverLogo />, kakao: <KakaoLogo />, google: <GoogleLogo /> }}
+        disabled={busy || auth.loading} onStart={() => setBusy(true)} onReturn={() => setBusy(false)} />
+      <Button variant="text" onClick={() => navigate('home')}>메뉴 먼저 둘러보기</Button>
+    </section>
+  </Screen>
 }
 
 /* ───────────── 03 휴대폰 인증 ───────────── */
@@ -178,65 +298,13 @@ function formatPhone(value: string) {
 
 export function PhoneScreen() {
   const { navigate } = useRouter()
-  const [phone, setPhone] = useState('')
-  const [code, setCode] = useState('')
-  const [sent, setSent] = useState(false)
-
+  const { customerPhone, setCustomerPhone } = useAppState()
   return (
-    <Screen
-      header={<Header title="휴대폰 인증" />}
-      footer={
-        <Footer>
-          <Button onClick={() => navigate('school')}>인증하고 시작하기</Button>
-        </Footer>
-      }
-    >
+    <Screen header={<Header title="주문 연락처" />} footer={<Footer><Button disabled={customerPhone.replace(/\D/g, '').length !== 11} onClick={() => navigate('school')}>연락처 저장하고 계속</Button></Footer>}>
       <div className="phone">
-        <p className="eyebrow">본인 확인</p>
-        <h1 className="title-xl phone-title">
-          휴대폰 번호를
-          <br />
-          입력해 주세요
-        </h1>
-        <p className="desc phone-desc">주문과 도착 안내를 받는 번호예요.</p>
-
-        <label className="field phone-field">
-          <span className="field-label">휴대폰 번호</span>
-          <span className="phone-row">
-            <input
-              className="text-input phone-input"
-              inputMode="tel"
-              placeholder="010-0000-0000"
-              value={phone}
-              onChange={(e) => setPhone(formatPhone(e.target.value))}
-            />
-            <Button
-              variant="secondary"
-              block={false}
-              className="phone-send"
-              onClick={() => setSent(true)}
-            >
-              {sent ? '다시 받기' : '인증번호 받기'}
-            </Button>
-          </span>
-        </label>
-
-        <label className="field code-field">
-          <span className="field-label">인증번호</span>
-          <input
-            className="text-input"
-            inputMode="numeric"
-            placeholder="인증번호 6자리"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-          />
-        </label>
-
-        <p className="notice-box phone-notice">
-          <InfoIcon />
-          입력하신 번호는 주문 안내와 본인 확인에 사용돼요.
-        </p>
+        <h1 className="title-xl phone-title">주문 안내를 받을 번호를 입력해 주세요</h1>
+        <label className="field"><span className="field-label">휴대폰 번호</span><input className="text-input" inputMode="tel" autoComplete="tel" placeholder="010-0000-0000" value={customerPhone} onChange={event => setCustomerPhone(formatPhone(event.target.value))} /></label>
+        <p className="desc">연락처를 저장합니다. 문자 인증은 제공하지 않습니다.</p>
       </div>
     </Screen>
   )

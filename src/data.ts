@@ -23,6 +23,7 @@ export const CATEGORIES: Category[] = ['전체', '과자', '젤리', '음료']
 
 export type Product = {
   id: string
+  stock: number
   name: string
   price: number
   category: Exclude<Category, '전체'>
@@ -34,19 +35,19 @@ export type Product = {
 }
 
 export const PRODUCTS: Product[] = [
-  { id: 'chips', name: '포테이토칩 60g', price: 1500, category: '과자', image: chips, detailImage: chipsDetail, description: '짭짤하고 바삭한 오리지널 감자칩', popular: true },
-  { id: 'jelly', name: '청포도젤리 50g', price: 1000, category: '젤리', image: jelly, description: '한 입에 쏙, 상큼하고 쫀득한 청포도 맛' },
-  { id: 'milk', name: '초코우유 200mL', price: 1200, category: '음료', image: milk, description: '달콤하고 부드러운 한 팩' },
-  { id: 'chips-2', name: '포테이토칩 2개 묶음', price: 3000, category: '과자', image: chips, detailImage: chipsDetail, description: '포테이토칩 60g 2개' },
-  { id: 'jelly-2', name: '청포도젤리 2개 묶음', price: 2000, category: '젤리', image: jelly, description: '청포도젤리 50g 2개' },
-  { id: 'milk-2', name: '초코우유 2개 묶음', price: 2400, category: '음료', image: milk, description: '초코우유 200mL 2개' },
+  { stock: 0, id: 'chips', name: '포테이토칩 60g', price: 1500, category: '과자', image: chips, detailImage: chipsDetail, description: '짭짤하고 바삭한 오리지널 감자칩', popular: true },
+  { stock: 0, id: 'jelly', name: '청포도젤리 50g', price: 1000, category: '젤리', image: jelly, description: '한 입에 쏙, 상큼하고 쫀득한 청포도 맛' },
+  { stock: 0, id: 'milk', name: '초코우유 200mL', price: 1200, category: '음료', image: milk, description: '달콤하고 부드러운 한 팩' },
+  { stock: 0, id: 'chips-2', name: '포테이토칩 2개 묶음', price: 3000, category: '과자', image: chips, detailImage: chipsDetail, description: '포테이토칩 60g 2개' },
+  { stock: 0, id: 'jelly-2', name: '청포도젤리 2개 묶음', price: 2000, category: '젤리', image: jelly, description: '청포도젤리 50g 2개' },
+  { stock: 0, id: 'milk-2', name: '초코우유 2개 묶음', price: 2400, category: '음료', image: milk, description: '초코우유 200mL 2개' },
 ]
 
 export const STORE = {
   name: '선린인터넷고 매점',
   school: '선린인터넷고등학교',
-  deliveryFee: 1000,
-  eta: '10~15분',
+  deliveryFee: 0,
+  eta: '비행 현황에서 확인',
 }
 
 export function won(amount: number) {

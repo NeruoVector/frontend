@@ -56,13 +56,14 @@
 
 .order-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 11px;
 }
 
 .order-btn {
   flex: 1;
-  min-height: 37px;
+  min-height: 44px;
   padding: 8px;
   border: 0.667px solid #dce3e4;
   border-radius: 6px;
@@ -364,3 +365,8 @@
   line-height: 16px;
   color: #929a9e;
 }
+
+.order-btn:focus-visible, .menu-item:focus-visible, .toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+.orders-list > [role="alert"] { padding: 12px; border-radius: var(--radius-control); background: var(--brand-soft); color: var(--brand-dark); font-size: 13px; line-height: 22px; overflow-wrap: anywhere; }
+.my-profile > div { min-width: 0; }
+.my-profile h2 { overflow-wrap: anywhere; }

@@ -1,0 +1,31 @@
+.mission-map .mission-map-canvas {
+  width: 100%;
+  height: 235px;
+  background: var(--surface);
+}
+.mission-map .mission-map-canvas[hidden] { display: none; }
+.mission-map .mission-map-canvas svg { width: auto; background: transparent; }
+.mission-map-status { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.mission-map figcaption { word-break: keep-all; overflow-wrap: anywhere; }
+.mission-school-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--brand-dark);
+  text-decoration: underline;
+}
+.mission-school-link:hover { color: var(--brand); }
+.mission-school-link:active { color: var(--ink); }
+.mission-school-link:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.mission-map-marker {
+  display: inline-block;
+  padding: 4px 7px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 11px var(--font-kr);
+  white-space: nowrap;
+}
+.mission-map-marker-destination { border-color: var(--brand); background: var(--brand); color: var(--spot-white); }
+.mission-map-marker-drone { background: var(--ink); color: var(--spot-white); }

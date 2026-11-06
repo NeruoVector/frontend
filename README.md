@@ -35,3 +35,29 @@ src/
 ├── styles/            # Figma 변수(tokens.css)와 기본 스타일
 └── assets/            # 상품 사진 (Figma 렌더에서 추출)
 ```
+
+
+## Live API integration
+
+This deployment uses the same-origin `/api/v1` proxy. Inventory, prices, checkout,
+dummy payments, order numbers and phone-filtered history use backend responses.
+No sample order is shown when no order is selected. A browser session restores its
+last API order on refresh. The tracking screen reads actual simulator assignments
+and persisted completed flights. POSTs are not automatically retried.
+
+The backend payment provider is a test provider; no real charge is made. SMS/SNS
+verification and physical receipt confirmation are unavailable.
+The existing flight monitor and administrator login remain at `/monitor/`.
+
+
+## Reviews and live camera
+
+Paid orders support one immutable review each: rating, text (1–500 characters), up to
+three tags, and one JPG/PNG/WebP photo up to 1MB. Reviews and photos persist in PostgreSQL.
+Open Orders → 리뷰 쓰기 / 보기; saved reviews reload read-only. The store review tab
+and My Reviews show backend records and actual rating totals.
+
+WebRTC playback is available at `/#/camera` and from the home camera button.
+The viewer loads the deployed ICE/TURN configuration, exchanges SDP through WHEP,
+monitors received frames, and releases the peer/session when closed or unmounted.
+Swagger is proxied at `/swagger-ui/`, with the spec at `/api-docs/openapi.json`.

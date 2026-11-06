@@ -15,7 +15,20 @@
   display: none;
 }
 
-@media (min-width: 760px) and (min-height: 900px) {
+/* 주문이 없을 때 주문 완료·배송 현황·도착 임박·수령 확인·리뷰 화면 */
+.order-empty {
+  display: grid;
+  gap: 10px;
+  padding: 32px 22px;
+}
+
+.order-empty > .desc {
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (min-width: 760px) {
   .app-stage {
     display: flex;
     align-items: center;
@@ -29,7 +42,7 @@
   .device {
     flex-shrink: 0;
     width: calc(var(--screen-w) + 24px);
-    height: calc(var(--screen-h) + 24px);
+    height: min(calc(var(--screen-h) + 24px), calc(100dvh - 48px));
     padding: 12px;
     border-radius: 56px;
     background: #1a2022;
@@ -38,7 +51,7 @@
 
   .device-screen {
     width: var(--screen-w);
-    height: var(--screen-h);
+    height: min(var(--screen-h), calc(100dvh - 72px));
     border-radius: 44px;
     overflow: hidden;
   }
@@ -52,7 +65,7 @@
     flex-direction: column;
     gap: 16px;
     width: 200px;
-    max-height: var(--screen-h);
+    max-height: min(var(--screen-h), calc(100dvh - 72px));
     overflow-y: auto;
   }
 

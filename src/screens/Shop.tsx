@@ -1,13 +1,16 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button, Footer, Header, Screen } from '../components/Layout.tsx'
 import { BottomNav } from '../components/BottomNav.tsx'
 import { RouteMap } from '../components/RouteMap.tsx'
-import { BellIcon, CartIcon, CloseIcon, HeartIcon, MinusIcon, PinIcon, PlusIcon, SearchIcon } from '../components/Icons.tsx'
-import { CATEGORIES, PLACES, PRODUCTS, STORE, STORE_INFO, won, type Category, type Product } from '../data.ts'
+import { CameraIcon, CartIcon, CloseIcon, HeartIcon, MinusIcon, PinIcon, PlusIcon, SearchIcon } from '../components/Icons.tsx'
+import { CATEGORIES, PLACES, STORE, STORE_INFO, won, type Category, type Product } from '../data.ts'
 import storeBanner from '../assets/store-banner.png'
 import { useRouter } from '../router.tsx'
+import { useAuth } from '../auth.tsx'
 import { useAppState } from '../store.tsx'
 import './Shop.css'
+import { ReviewEntries, useReviews } from '../components/Reviews.tsx'
+import { cartStockIssue } from '../studentInventory.ts'
 
 /* ───────────── 수령 장소 선택 목록 (기본 수령 장소 · 수령 장소 변경 공용) ───────────── */
 
@@ -87,9 +90,9 @@ export function ProductCard({ product }: { product: Product }) {
         navigate('menu')
       }}
     >
-      <img className="product-photo" src={product.image} alt="" />
+      {product.image ? <img className="product-photo" src={product.image} alt="" /> : <span className="product-photo product-photo-missing" role="img" aria-label="상품 이미지 없음">이미지 없음</span>}
       <span className="product-name">{product.name}</span>
-      <span className="product-price">{won(product.price)}</span>
+      <span className="product-price">{won(product.price)}{product.stock <= 0 && <span className="stock-status">품절</span>}</span>
     </button>
   )
 }
@@ -136,7 +139,8 @@ export function HomeScreen() {
   const { place } = useAppState()
   const [category, setCategory] = useState<Category>('전체')
   const [query, setQuery] = useState('')
-  const products = PRODUCTS.filter(
+  const { products: catalog, loading, catalogError } = useAppState()
+  const products = catalog.filter(
     (p) => (category === '전체' || p.category === category) && p.name.includes(query.trim()),
   )
 
@@ -152,8 +156,8 @@ export function HomeScreen() {
               </svg>
             </button>
             <div className="home-top-actions">
-              <button type="button" className="icon-button is-light" aria-label="알림">
-                <BellIcon />
+              <button type="button" className="icon-button is-light" aria-label="실시간 영상" onClick={() => navigate('camera')}>
+                <CameraIcon />
               </button>
               <CartButton light />
             </div>
@@ -186,7 +190,9 @@ export function HomeScreen() {
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
-          {products.length === 0 && <p className="desc">찾는 상품이 없어요.</p>}
+          {loading && <p className="desc" role="status">상품을 불러오는 중…</p>}
+          {catalogError && <p role="alert">{catalogError}</p>}
+          {!loading && !catalogError && products.length === 0 && <p className="desc">찾는 상품이 없어요.</p>}
         </section>
     </Screen>
   )
@@ -198,9 +204,10 @@ const STORE_TABS = ['메뉴', '가게 정보', '리뷰'] as const
 
 export function StoreScreen() {
   const { navigate } = useRouter()
-  const { place, cartCount, subtotal, selectProduct } = useAppState()
+  const { place, cartCount, subtotal, selectProduct, products: catalog, loading, catalogError } = useAppState()
   const [tab, setTab] = useState<(typeof STORE_TABS)[number]>('메뉴')
-  const menu = PRODUCTS.slice(0, 3)
+  const menu = catalog
+  const reviews = useReviews()
 
   return (
     <Screen
@@ -219,8 +226,7 @@ export function StoreScreen() {
       <section className="store-info">
         <h1 className="store-name">{STORE.name}</h1>
         <p className="store-rating">
-          <span className="star">★</span> <strong>{STORE_INFO.rating}</strong> ({STORE_INFO.reviewCount}) ·{' '}
-          {STORE_INFO.tagline}
+          {reviews.state.status === 'ready' ? <><span className="star">★</span> <strong>{reviews.state.data.average_rating?.toFixed(1) ?? '—'}</strong> · 리뷰 {reviews.state.data.total}개</> : reviews.state.status === 'loading' ? '리뷰 불러오는 중…' : '리뷰 정보를 확인하지 못했습니다.'}
         </p>
         <div className="store-tags">
           <span className="tag tag-brand">교내 배달</span>
@@ -260,6 +266,9 @@ export function StoreScreen() {
       {tab === '메뉴' ? (
         <section className="menu-list">
           <h3 className="menu-list-title">인기 메뉴</h3>
+          {loading && <p className="desc" role="status">상품을 불러오는 중…</p>}
+          {catalogError && <p role="alert">{catalogError}</p>}
+          {!loading && !catalogError && menu.length === 0 && <p className="desc">판매 중인 상품이 없습니다.</p>}
           {menu.map((p) => (
             <button
               key={p.id}
@@ -273,14 +282,15 @@ export function StoreScreen() {
               <span className="menu-row-text">
                 {p.popular && <span className="tag tag-brand tag-xs">인기</span>}
                 <strong>{p.name}</strong>
+                {p.stock <= 0 && <span className="stock-status">품절</span>}
                 <small>{p.description}</small>
                 <b>{won(p.price)}</b>
               </span>
-              <img className="menu-row-photo" src={p.image} alt={`${p.name} 사진`} />
+              {p.image && <img className="menu-row-photo" src={p.image} alt={`${p.name} 사진`} />}
             </button>
           ))}
         </section>
-      ) : (
+      ) : tab === '리뷰' ? <section className="reviews-page"><ReviewEntries {...reviews} /></section> : (
         <p className="desc store-tab-empty">{tab} 화면은 준비 중이에요.</p>
       )}
     </Screen>
@@ -291,11 +301,14 @@ export function StoreScreen() {
 
 export function MenuScreen() {
   const { navigate } = useRouter()
-  const { selectedProduct: product, addToCart } = useAppState()
+  const { selectedProduct: product, addToCart, cart } = useAppState()
   const [liked, setLiked] = useState(false)
   const [bag, setBag] = useState(false)
   const [quantity, setQuantity] = useState(1)
 
+  if (!product) return <Screen header={<Header title="메뉴 상세" />}><p className="desc">상품을 선택해 주세요.</p></Screen>
+  const available = Math.max(0, product.stock - (cart.find(line => line.product.id === product.id)?.quantity ?? 0))
+  const requested = Math.min(quantity, available)
   return (
     <Screen
       header={
@@ -317,22 +330,24 @@ export function MenuScreen() {
       footer={
         <Footer>
           <Button
+            disabled={requested === 0}
             onClick={() => {
-              addToCart(product, quantity)
+              addToCart(product, requested)
               navigate('cart')
             }}
           >
-            {won(product.price * quantity)} 담기
+            {product.stock <= 0 ? '품절' : requested > 0 ? `${won(product.price * requested)} 담기` : '추가 가능한 재고 없음'}
           </Button>
         </Footer>
       }
     >
       <div className="menu-photo">
-        <img src={product.detailImage ?? product.image} alt={`${product.name} 사진`} />
+        {product.image ? <img src={product.detailImage ?? product.image} alt={`${product.name} 사진`} /> : <p className="desc">등록된 상품 이미지가 없습니다.</p>}
       </div>
       <section className="menu-info">
         {product.popular && <span className="tag tag-brand">매점 인기 메뉴</span>}
         <h1 className="menu-name">{product.name}</h1>
+        {product.stock <= 0 && <p className="stock-status" role="status">품절</p>}
         <p className="desc menu-desc">{product.description}</p>
         <div className="menu-price">
           <span className="desc">기본 가격</span>
@@ -351,7 +366,8 @@ export function MenuScreen() {
         </label>
         <div className="menu-quantity">
           <strong>수량</strong>
-          <QuantityStepper value={quantity} onChange={setQuantity} min={1} />
+          <QuantityStepper value={requested} onChange={setQuantity} min={1} max={available} />
+          <p className="desc">추가 가능 {available}개</p>
         </div>
       </section>
     </Screen>
@@ -362,10 +378,12 @@ export function QuantityStepper({
   value,
   onChange,
   min = 0,
+  max,
 }: {
   value: number
   onChange: (v: number) => void
   min?: number
+  max?: number
 }) {
   return (
     <div className="stepper">
@@ -373,7 +391,7 @@ export function QuantityStepper({
         <MinusIcon size={14} />
       </button>
       <output aria-live="polite">{value}</output>
-      <button type="button" aria-label="수량 늘리기" onClick={() => onChange(value + 1)}>
+      <button type="button" aria-label="수량 늘리기" disabled={max !== undefined && value >= max} onClick={() => onChange(value + 1)}>
         <PlusIcon size={14} />
       </button>
     </div>
@@ -403,15 +421,15 @@ function PriceSummary({ subtotal, deliveryFee, total }: { subtotal: number; deli
 
 export function CartScreen() {
   const { navigate } = useRouter()
-  const { cart, setQuantity, subtotal, deliveryFee, total } = useAppState()
-  const [note, setNote] = useState('')
+  const { cart, setQuantity, subtotal, deliveryFee, total, orderNote: note, setOrderNote: setNote } = useAppState()
+  const stockIssue = cartStockIssue(cart)
 
   return (
     <Screen
       header={<Header title="장바구니" />}
       footer={
         <Footer>
-          <Button disabled={cart.length === 0} onClick={() => navigate('payment')}>
+          <Button disabled={stockIssue !== null} onClick={() => navigate('payment')}>
             {won(total)} 주문하기
           </Button>
         </Footer>
@@ -420,14 +438,16 @@ export function CartScreen() {
       <h3 className="cart-store">{STORE.name}</h3>
       <div className="section-gap" />
       {cart.length === 0 && <p className="desc cart-empty">장바구니가 비어 있어요.</p>}
+      {cart.length > 0 && stockIssue && <p className="desc cart-empty" role="alert">{stockIssue}</p>}
       {cart.map(({ product, quantity }) => (
         <div key={product.id} className="cart-line">
-          <img className="cart-line-photo" src={product.image} alt={`${product.name} 사진`} />
+          {product.image && <img className="cart-line-photo" src={product.image} alt={`${product.name} 사진`} />}
           <div className="cart-line-info">
             <strong>{product.name}</strong>
+            {product.stock <= 0 && <span className="stock-status">품절</span>}
             <small>기본 상품</small>
             <b>{won(product.price * quantity)}</b>
-            <QuantityStepper value={quantity} onChange={(q) => setQuantity(product.id, q)} min={1} />
+            <QuantityStepper value={quantity} onChange={(q) => setQuantity(product.id, q)} min={1} max={product.stock} />
           </div>
           <button
             type="button"
@@ -472,8 +492,27 @@ const PAYMENT_METHODS = ['카드 결제', '간편 결제', '계좌 이체', '휴
 
 export function PaymentScreen() {
   const { navigate } = useRouter()
-  const { place, cart, cartCount, subtotal, deliveryFee, total, placeOrder } = useAppState()
+  const { place, cart, cartCount, subtotal, deliveryFee, total, placeOrder, customerName, customerPhone } = useAppState()
+  const { customer, loading: authLoading } = useAuth()
   const [method, setMethod] = useState<(typeof PAYMENT_METHODS)[number]>('카드 결제')
+
+  const [submitting, setSubmitting] = useState(false)
+  const checkoutInFlight = useRef(false)
+  const [error, setError] = useState<string | null>(null)
+  const stockIssue = cartStockIssue(cart)
+
+  async function checkout() {
+    if (checkoutInFlight.current) return
+    checkoutInFlight.current = true
+    setSubmitting(true)
+    setError(null)
+    try {
+      await placeOrder(method)
+      navigate('order-complete', { replace: true })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '주문 처리에 실패했습니다.')
+    } finally { checkoutInFlight.current = false; setSubmitting(false) }
+  }
 
   return (
     <Screen
@@ -481,17 +520,21 @@ export function PaymentScreen() {
       footer={
         <Footer>
           <Button
-            disabled={cart.length === 0}
-            onClick={() => {
-              placeOrder(method)
-              navigate('order-complete', { replace: true })
-            }}
+            disabled={stockIssue !== null || submitting || authLoading}
+            onClick={() => customer ? void checkout() : navigate('login')}
           >
-            {won(total)} 결제하기
+            {submitting ? '처리 중…' : customer ? `${won(total)} 결제하기` : '로그인하고 주문하기'}
           </Button>
         </Footer>
       }
     >
+      <section className="pay-section">
+        <label className="field">주문자 이름<input className="text-input" autoComplete="name" value={customerName} readOnly /></label>
+        <label className="field">연락처<input className="text-input" inputMode="tel" autoComplete="tel" value={customerPhone} readOnly placeholder="01012345678" /></label>
+        <p className="desc">테스트 결제이며 실제 청구되지 않습니다.</p>
+        {error && <p role="alert">{error}</p>}
+        {!error && cart.length > 0 && stockIssue && <p role="alert">{stockIssue}</p>}
+      </section>
       <section className="pay-section">
         <h3 className="cart-section-title">받을 장소</h3>
         <div className="pay-place">
@@ -503,7 +546,7 @@ export function PaymentScreen() {
             변경
           </button>
         </div>
-        <p className="pay-notice">도착 알림을 받으면 수령 장소로 나와주세요.</p>
+        <p className="pay-notice">주문 상태와 비행 현황은 결제 후 확인할 수 있습니다.</p>
       </section>
       <div className="section-gap" />
       <section className="pay-section">
@@ -538,7 +581,7 @@ export function PaymentScreen() {
             </button>
           ))}
         </div>
-        {method === '카드 결제' && <p className="pay-card">신한카드 · •••• 1234</p>}
+        {method === '카드 결제' && <p className="pay-card">테스트 카드 결제</p>}
       </section>
       <div className="section-gap" />
       <section className="pay-section">

@@ -95,21 +95,60 @@
   color: #a3adb0;
 }
 
+/* 약관 내용 보기 (아래에서 올라오는 시트) */
+.terms-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(41, 37, 36, 0.45);
+}
+
+.terms-sheet {
+  width: 100%;
+  max-height: 80%;
+  overflow-y: auto;
+  padding: 24px 22px max(22px, env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: var(--spot-white);
+}
+
+.terms-sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.terms-sheet-body {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 22px;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 13px;
+  line-height: 21px;
+  color: var(--muted);
+}
+
 /* ── 로그인 ── */
 .login-hero {
   position: relative;
-  height: 325px;
-  padding: 35px 24px 25px;
+  height: 156px;
+  padding: 20px 22px;
   overflow: hidden;
   background: var(--brand-soft);
 }
 
 .login-title {
-  padding-top: 19px;
+  padding-top: 0;
   font-family: var(--font-brand);
-  font-size: 31px;
+  font-size: 24px;
   font-weight: 400;
-  line-height: 40.3px;
+  line-height: 32px;
   letter-spacing: -1px;
 }
 
@@ -119,10 +158,10 @@
 
 .login-image {
   position: absolute;
-  left: 200px;
-  top: 197px;
-  width: 180px;
-  height: 120px;
+  right: 18px;
+  bottom: 8px;
+  width: 88px;
+  height: 59px;
   object-fit: contain;
 }
 
@@ -130,7 +169,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 35px 22px;
+  padding: 20px 22px;
 }
 
 .login-subtitle {
@@ -148,9 +187,15 @@
 .oauth {
   display: grid;
   place-items: center;
-  width: 60px;
-  height: 60px;
+  width: 44px;
+  height: 44px;
+  padding: 12px;
   border-radius: 50%;
+}
+
+.oauth svg {
+  width: 20px;
+  height: 20px;
 }
 
 .oauth-naver {
@@ -370,3 +415,38 @@
 .school-card .btn-secondary {
   border-color: var(--line);
 }
+
+.auth-form { display: grid; width: 100%; gap: 12px; margin-bottom: 12px; }
+
+.login-hero.is-signup {
+  height: 160px;
+  padding-top: 16px;
+}
+
+.login-hero.is-signup .login-title { padding-top: 0; font-size: 24px; line-height: 34px; }
+.login-hero.is-signup .login-image { top: 75px; left: auto; right: 16px; width: 120px; height: 80px; }
+.login-actions .field { font-size: 12px; font-weight: 600; }
+.login-actions .text-input { font-size: 16px; }
+.login-actions > .btn-secondary { flex-shrink: 0; }
+.login-actions > .desc { margin-top: 12px; text-align: center; }
+.auth-hint { margin-top: -10px; font-size: 11px; line-height: 18px; color: var(--muted); }
+.auth-error { padding: 12px; border-radius: var(--radius-control); background: var(--brand-soft); color: var(--brand-dark); font-size: 13px; line-height: 22px; overflow-wrap: anywhere; }
+.login-actions .btn-text { min-height: 44px; margin-top: 8px; }
+
+@media (max-height: 760px) {
+  .login-hero:not(.is-signup) { height: 84px; padding: 12px 22px; }
+  .login-hero:not(.is-signup) .login-title { font-size: 20px; line-height: 26px; }
+  .login-hero:not(.is-signup) .login-image { width: 60px; height: 40px; bottom: 4px; }
+  .login-actions { padding: 10px 22px; }
+  .login-actions .auth-form { gap: 8px; margin-bottom: 10px; }
+  .login-actions .text-input { min-height: 44px; height: 44px; margin-top: 4px; }
+  .login-actions .btn-large { height: 44px; }
+  .login-actions .oauth-row { padding-top: 8px; }
+  .login-actions > .desc { margin-top: 8px; }
+  .login-actions .btn-text { margin-top: 6px; }
+}
+.oauth:disabled { opacity: 0.55; cursor: default; }
+.oauth:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.oauth:not(:disabled):hover { filter: brightness(0.96); }
+.oauth:not(:disabled):active { filter: brightness(0.9); }
+.oauth-feedback { word-break: keep-all; overflow-wrap: anywhere; }

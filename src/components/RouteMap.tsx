@@ -24,7 +24,7 @@ export function RouteMap({ height = 230, progress = 0.5 }: { height?: number; pr
       height={height}
       preserveAspectRatio="xMidYMid slice"
       role="img"
-      aria-label="배달 경로의 출발, 도착, 현재 위치"
+      aria-label="배달 경로 안내 예시. 실제 위치 정보가 아닙니다."
     >
       <rect width="390" height="230" fill="var(--surface)" />
       <path
@@ -39,9 +39,9 @@ export function RouteMap({ height = 230, progress = 0.5 }: { height?: number; pr
       <circle cx="243" cy="112" r="5.6" fill="#fff" stroke="var(--brand)" strokeWidth="2.6" />
       <circle cx={cx} cy={cy} r="6.2" fill="var(--brand)" stroke="#fff" strokeWidth="1.5" />
       <g fontFamily="Inter, 'Noto Sans KR', sans-serif" fontSize="11.5" fill="var(--ink)" textAnchor="middle">
-        <text x="151.5" y="125">출발</text>
-        <text x="242.5" y="93">도착</text>
-        <text x={cx} y={cy + 27}>현재 위치</text>
+        <text x="151.5" y="125">출발 예시</text>
+        <text x="242.5" y="93">수령 예시</text>
+        <text x={cx} y={cy + 27}>위치 예시</text>
       </g>
     </svg>
   )
