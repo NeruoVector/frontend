@@ -861,3 +861,16 @@
   font-size: 12px;
   background: var(--surface);
 }
+
+.stock-status {
+  display: block;
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.product-price .stock-status {
+  display: inline;
+  margin-left: 4px;
+}

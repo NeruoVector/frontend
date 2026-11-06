@@ -10,6 +10,7 @@ import { useAuth } from '../auth.tsx'
 import { useAppState } from '../store.tsx'
 import './Shop.css'
 import { ReviewEntries, useReviews } from '../components/Reviews.tsx'
+import { cartStockIssue } from '../studentInventory.ts'
 
 /* ───────────── 수령 장소 선택 목록 (기본 수령 장소 · 수령 장소 변경 공용) ───────────── */
 
@@ -84,7 +85,6 @@ export function ProductCard({ product }: { product: Product }) {
     <button
       type="button"
       className="product-card"
-      disabled={product.stock <= 0}
       onClick={() => {
         selectProduct(product)
         navigate('menu')
@@ -92,7 +92,7 @@ export function ProductCard({ product }: { product: Product }) {
     >
       {product.image ? <img className="product-photo" src={product.image} alt="" /> : <span className="product-photo product-photo-missing" role="img" aria-label="상품 이미지 없음">이미지 없음</span>}
       <span className="product-name">{product.name}</span>
-      <span className="product-price">{won(product.price)}</span>
+      <span className="product-price">{won(product.price)}{product.stock <= 0 && <span className="stock-status">품절</span>}</span>
     </button>
   )
 }
@@ -274,7 +274,6 @@ export function StoreScreen() {
               key={p.id}
               type="button"
               className="menu-row"
-              disabled={p.stock <= 0}
               onClick={() => {
                 selectProduct(p)
                 navigate('menu')
@@ -283,6 +282,7 @@ export function StoreScreen() {
               <span className="menu-row-text">
                 {p.popular && <span className="tag tag-brand tag-xs">인기</span>}
                 <strong>{p.name}</strong>
+                {p.stock <= 0 && <span className="stock-status">품절</span>}
                 <small>{p.description}</small>
                 <b>{won(p.price)}</b>
               </span>
@@ -336,7 +336,7 @@ export function MenuScreen() {
               navigate('cart')
             }}
           >
-            {requested > 0 ? `${won(product.price * requested)} 담기` : '추가 가능한 재고 없음'}
+            {product.stock <= 0 ? '품절' : requested > 0 ? `${won(product.price * requested)} 담기` : '추가 가능한 재고 없음'}
           </Button>
         </Footer>
       }
@@ -347,6 +347,7 @@ export function MenuScreen() {
       <section className="menu-info">
         {product.popular && <span className="tag tag-brand">매점 인기 메뉴</span>}
         <h1 className="menu-name">{product.name}</h1>
+        {product.stock <= 0 && <p className="stock-status" role="status">품절</p>}
         <p className="desc menu-desc">{product.description}</p>
         <div className="menu-price">
           <span className="desc">기본 가격</span>
@@ -421,13 +422,14 @@ function PriceSummary({ subtotal, deliveryFee, total }: { subtotal: number; deli
 export function CartScreen() {
   const { navigate } = useRouter()
   const { cart, setQuantity, subtotal, deliveryFee, total, orderNote: note, setOrderNote: setNote } = useAppState()
+  const stockIssue = cartStockIssue(cart)
 
   return (
     <Screen
       header={<Header title="장바구니" />}
       footer={
         <Footer>
-          <Button disabled={cart.length === 0} onClick={() => navigate('payment')}>
+          <Button disabled={stockIssue !== null} onClick={() => navigate('payment')}>
             {won(total)} 주문하기
           </Button>
         </Footer>
@@ -436,11 +438,13 @@ export function CartScreen() {
       <h3 className="cart-store">{STORE.name}</h3>
       <div className="section-gap" />
       {cart.length === 0 && <p className="desc cart-empty">장바구니가 비어 있어요.</p>}
+      {cart.length > 0 && stockIssue && <p className="desc cart-empty" role="alert">{stockIssue}</p>}
       {cart.map(({ product, quantity }) => (
         <div key={product.id} className="cart-line">
           {product.image && <img className="cart-line-photo" src={product.image} alt={`${product.name} 사진`} />}
           <div className="cart-line-info">
             <strong>{product.name}</strong>
+            {product.stock <= 0 && <span className="stock-status">품절</span>}
             <small>기본 상품</small>
             <b>{won(product.price * quantity)}</b>
             <QuantityStepper value={quantity} onChange={(q) => setQuantity(product.id, q)} min={1} max={product.stock} />
@@ -495,6 +499,7 @@ export function PaymentScreen() {
   const [submitting, setSubmitting] = useState(false)
   const checkoutInFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
+  const stockIssue = cartStockIssue(cart)
 
   async function checkout() {
     if (checkoutInFlight.current) return
@@ -515,7 +520,7 @@ export function PaymentScreen() {
       footer={
         <Footer>
           <Button
-            disabled={cart.length === 0 || submitting || authLoading}
+            disabled={stockIssue !== null || submitting || authLoading}
             onClick={() => customer ? void checkout() : navigate('login')}
           >
             {submitting ? '처리 중…' : customer ? `${won(total)} 결제하기` : '로그인하고 주문하기'}
@@ -528,6 +533,7 @@ export function PaymentScreen() {
         <label className="field">연락처<input className="text-input" inputMode="tel" autoComplete="tel" value={customerPhone} readOnly placeholder="01012345678" /></label>
         <p className="desc">테스트 결제이며 실제 청구되지 않습니다.</p>
         {error && <p role="alert">{error}</p>}
+        {!error && cart.length > 0 && stockIssue && <p role="alert">{stockIssue}</p>}
       </section>
       <section className="pay-section">
         <h3 className="cart-section-title">받을 장소</h3>
