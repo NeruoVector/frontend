@@ -92,7 +92,7 @@ function CurrentScreen() {
     <div className="device-screen" key={route}>
       <Screen header={<Header title={SCREENS[route].label} />}>
         <div className="order-empty">
-          <p className="desc" role="status">{loading ? '주문을 불러오는 중…' : '아직 진행 중인 주문이 없어요.'}</p>
+          <p className="desc" role="status">{loading ? '주문을 불러오는 중…' : '선택한 주문이 없습니다.'}</p>
           {!loading && <>
             <Button onClick={() => navigate('home')}>상품 보러 가기</Button>
             <Button variant="secondary" onClick={() => navigate('orders')}>주문 내역 보기</Button>

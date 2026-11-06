@@ -16,6 +16,10 @@ random pickup code may stand in for server data. Orders trigger one simulation
 flight and landing; this does not claim physical delivery to the selected location.
 
 The existing monitor is preserved at /monitor/ with its map, camera and admin login.
+PR #1 integration preserves the existing shell, tokens and screen layout. Empty order
+routes use the same device-screen frame and their own title, with catalog/history
+actions. Terms details reuse the PR bottom sheet geometry; keyboard focus stays in
+the sheet and returns to its opener. Copy describes the implemented demo only.
 The new tracking view links to it and shows current simulator state directly.
 Phone input saves an order contact; it does not claim SMS verification.
 
