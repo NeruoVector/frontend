@@ -2,8 +2,11 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { PLACES, PRODUCTS, type Place, type Product } from './data.ts'
 import { useAuth } from './auth.tsx'
 import { api, type Item, type OrderDetail } from './api.ts'
+import { useProductPhotos } from './useProductPhotos.ts'
+import { productWithPhoto } from './productPhotoProducts.ts'
+import { cartOrderNotes, cartStockIssue, CheckoutStockError, studentCatalogItems } from './studentInventory.ts'
 
-export type CartLine = { product: Product; quantity: number }
+export type CartLine = { product: Product; quantity: number; readonly includeBag?: boolean }
 export type Order = {
   id: string; number: string; pickupCode: string; lines: CartLine[]; subtotal: number; deliveryFee: number;
   total: number; placeName: string; paymentMethod: string; createdAt: Date; status: string;
@@ -14,7 +17,7 @@ type AppState = {
   products: Product[]; catalogError: string | null; loading: boolean;
   orderNote: string; setOrderNote: (note: string) => void;
   cart: CartLine[]; cartCount: number; subtotal: number; deliveryFee: number; total: number;
-  addToCart: (product: Product, quantity?: number) => void; setQuantity: (id: string, quantity: number) => void;
+  addToCart: (product: Product, quantity?: number, includeBag?: boolean) => void; setQuantity: (id: string, quantity: number) => void;
   clearCart: () => void; selectedProduct: Product | null; selectProduct: (product: Product) => void;
   order: Order | null; customerName: string; setCustomerName: (name: string) => void;
   customerPhone: string; setCustomerPhone: (phone: string) => void;
@@ -57,12 +60,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [customerPhone, setCustomerPhone] = useState('')
   const checkoutBusy = useRef(false)
   const pendingOrder = useRef<string | null>(null)
+  const photos = useProductPhotos()
 
   useEffect(() => {
     let active = true
     api.items().then(async items => {
       if (!active) return
-      const catalog = items.filter(item => item.active && item.currency === 'KRW').map(productFromItem)
+      const catalog = studentCatalogItems(items).map(productFromItem)
       setProducts(catalog)
       selectProduct(catalog[0] ?? null)
 
@@ -97,17 +101,29 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [customer?.id, products])
 
   const value = useMemo<AppState>(() => {
-    const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0)
-    const subtotal = cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0)
+    const withPhoto = (product: Product): Product => productWithPhoto(product, photos)
+    const visibleProducts = products.map(withPhoto)
+    const visibleCart = cart.map(line => ({ ...line, product: withPhoto(products.find(product => product.id === line.product.id) ?? { ...line.product, stock: 0 }) }))
+    const currentSelection = products.find(product => product.id === selectedProduct?.id)
+    const visibleOrder = order ? { ...order, lines: order.lines.map(line => ({ ...line, product: withPhoto(line.product) })) } : null
+    const cartCount = visibleCart.reduce((sum, line) => sum + line.quantity, 0)
+    const subtotal = visibleCart.reduce((sum, line) => sum + line.product.price * line.quantity, 0)
     return {
-      place, setPlace, products, catalogError, loading, orderNote, setOrderNote, cart, cartCount, subtotal, deliveryFee: 0, total: subtotal,
-      addToCart: (product, quantity = 1) => setCart(prev => {
+      place, setPlace, products: visibleProducts, catalogError, loading, orderNote, setOrderNote, cart: visibleCart, cartCount, subtotal, deliveryFee: 0, total: subtotal,
+      addToCart: (product, quantity = 1, includeBag = false) => setCart(prev => {
+        const current = products.find(item => item.id === product.id)
+        if (!current || current.stock <= 0 || !Number.isInteger(quantity) || quantity <= 0) return prev
         const found = prev.find(line => line.product.id === product.id)
-        if (found) return prev.map(line => line.product.id === product.id ? { ...line, quantity: Math.min(product.stock, line.quantity + quantity) } : line)
-        return product.stock > 0 ? [...prev, { product, quantity: Math.min(quantity, product.stock) }] : prev
+        if (found) return prev.map(line => line.product.id === product.id ? { product: current, quantity: Math.min(current.stock, line.quantity + quantity), includeBag: line.includeBag || includeBag } : line)
+        return [...prev, { product: current, quantity: Math.min(quantity, current.stock), includeBag }]
       }),
-      setQuantity: (id, quantity) => setCart(prev => quantity <= 0 ? prev.filter(line => line.product.id !== id) : prev.map(line => line.product.id === id ? { ...line, quantity: Math.min(quantity, line.product.stock) } : line)),
-      clearCart: () => setCart([]), selectedProduct, selectProduct, order,
+      setQuantity: (id, quantity) => setCart(prev => {
+        if (quantity <= 0) return prev.filter(line => line.product.id !== id)
+        const current = products.find(product => product.id === id)
+        if (!current || current.stock <= 0 || !Number.isInteger(quantity)) return prev
+        return prev.map(line => line.product.id === id ? { ...line, product: current, quantity: Math.min(quantity, current.stock) } : line)
+      }),
+      clearCart: () => setCart([]), selectedProduct: currentSelection ? withPhoto(currentSelection) : null, selectProduct, order: visibleOrder,
       customerName, setCustomerName, customerPhone, setCustomerPhone,
       loadOrder: async id => {
         const owner = identity.current
@@ -125,8 +141,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           if (!customerName.trim() || customerPhone.replace(/\D/g, '').length !== 11) throw new Error('이름과 11자리 휴대폰 번호를 입력해 주세요.')
           let id = pendingOrder.current
           if (!id) {
+            const initialIssue = cartStockIssue(visibleCart)
+            if (initialIssue) throw new CheckoutStockError(initialIssue)
+            const latestItems = await Promise.all(cart.map(line => api.item(line.product.id)))
+            if (identity.current !== owner) return
+            const latestProducts = studentCatalogItems(latestItems).map(productFromItem)
+            setProducts(previous => previous.flatMap(product => latestItems.some(item => item.id === product.id)
+              ? latestProducts.filter(item => item.id === product.id) : [product]))
+            const latestCart = cart.map(line => ({ ...line, product: latestProducts.find(product => product.id === line.product.id) ?? { ...line.product, stock: 0 } }))
+            const issue = cartStockIssue(latestCart)
+            if (issue) throw new CheckoutStockError(issue)
             const created = await api.createOrder({ customer_name: customerName.trim(), customer_phone: customerPhone.replace(/\D/g, ''),
-              items: cart.map(line => ({ item_id: line.product.id, quantity: line.quantity })), delivery_address: '선린인터넷고등학교', delivery_detail: place.name, notes: orderNote || undefined })
+              items: cart.map(line => ({ item_id: line.product.id, quantity: line.quantity })), delivery_address: '선린인터넷고등학교', delivery_detail: place.name, notes: cartOrderNotes(orderNote, cart) })
             if (identity.current !== owner) return
             id = created.id
             pendingOrder.current = id
@@ -147,7 +173,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         } finally { checkoutBusy.current = false }
       },
     }
-  }, [place, products, catalogError, loading, orderNote, cart, selectedProduct, order, customerName, customerPhone, customer])
+  }, [place, products, catalogError, loading, orderNote, cart, selectedProduct, order, customerName, customerPhone, customer, photos])
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
 }

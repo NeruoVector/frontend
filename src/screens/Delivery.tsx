@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Footer, Header, Screen } from '../components/Layout.tsx'
-import { RouteMap } from '../components/RouteMap.tsx'
-import { CameraIcon, CheckIcon, DroneIcon, InfoIcon, PhoneIcon } from '../components/Icons.tsx'
+import { ReceiptScreen } from './Receipt.tsx'
+import { CameraIcon, CheckIcon, DroneIcon } from '../components/Icons.tsx'
 import { STORE, won } from '../data.ts'
 import { useRouter } from '../router.tsx'
 import { useAppState, type Order } from '../store.tsx'
@@ -9,7 +9,7 @@ import './Delivery.css'
 import { LiveCamera } from '../components/LiveCamera.tsx'
 import { api, ApiError, type Review } from '../api.ts'
 import { useOrderFlightProgress } from '../useOrderFlightProgress.ts'
-import { flightDistance, flightEta, flightStep } from '../flightProgress.ts'
+import { canConfirmReceipt, flightDistance, flightEta, flightStep, missionStatus } from '../flightProgress.ts'
 import { MissionMap } from '../components/MissionMap.tsx'
 
 export function useOrder() {
@@ -71,16 +71,16 @@ export function OrderCompleteScreen() {
         </dl>
       </div>
       <p className="done-number">주문번호 {order.pickupCode}</p>
-      <p className="desc done-pickup-hint">이 4자리 번호가 상품 수령 시 사용하는 비밀번호입니다. 계정 비밀번호와 다릅니다.</p>
+      <p className="desc done-pickup-hint">배송지에 착륙하면 수령 확인 버튼으로 상품 수령을 알려주세요.</p>
     </Screen>
   )
 }
 
 /* ───────────── 13 배달 현황 ───────────── */
 
-const STEPS = ['주문 접수', '준비 중', '비행 중', '비행 완료'] as const
+const STEPS = ['주문 접수', '준비 중', '배송 비행', '수령 대기', '복귀 중', '배송 완료'] as const
 
-function DeliverySteps({ current }: { current: number }) {
+function DeliverySteps({ current }: { readonly current: number | null }) {
   const col = 346 / STEPS.length
   return (
     <div className="steps">
@@ -92,13 +92,13 @@ function DeliverySteps({ current }: { current: number }) {
             x2={col * (i + 1) + col / 2}
             y1="12"
             y2="12"
-            stroke={i < current ? 'var(--brand)' : '#ece6df'}
+            stroke={current !== null && i < current ? 'var(--brand)' : '#ece6df'}
             strokeWidth="2"
           />
         ))}
         {STEPS.map((_, i) => {
           const cx = col * i + col / 2
-          if (i < current) return <circle key={i} cx={cx} cy="12" r="7.5" fill="var(--brand)" />
+          if (current !== null && i < current) return <circle key={i} cx={cx} cy="12" r="7.5" fill="var(--brand)" />
           if (i === current)
             return (
               <g key={i}>
@@ -109,7 +109,7 @@ function DeliverySteps({ current }: { current: number }) {
           return <circle key={i} cx={cx} cy="12" r="7.5" fill="#ece6df" />
         })}
       </svg>
-      <ol className="steps-labels">
+      <ol className="steps-labels" aria-label={current === null ? '비행 상태 확인 중' : '배송 진행 단계'}>
         {STEPS.map((label, i) => (
           <li key={label} className={i === current ? 'is-current' : ''} aria-current={i === current ? 'step' : undefined}>
             {label}
@@ -128,15 +128,17 @@ export function TrackingScreen() {
   const mode = simulation?.mode ?? 'waiting_for_order'
   const position = fresh ? simulation?.position_enu : null
   const moving = active && (mode === 'flying' || mode === 'landing')
-  const current = flightStep(order.status, completed, active, moving || simulation?.armed === true || mission?.arrived === true)
-  const status = completed ? '시뮬레이션 비행 완료' : !fresh ? '비행 상태 확인 중' : active && mode.startsWith('hold_') ? (mode === 'hold_route_unavailable' ? '수령 장소의 비행 경로를 확인해 주세요' : '안전 확인을 위해 대기 중') : mission?.phase === 'arrival_hold' ? '목적지 도착 · 수령 지점 확인 중' : mission?.phase === 'returning' || mission?.phase === 'landing' ? '목적지 도착 · 출발지로 귀환 중' : moving ? '주문을 받아 비행 중' : '출발 대기 중'
+  const current = !fresh && !completed ? null : flightStep(order.status, completed, active, moving || simulation?.armed === true || mission?.arrived === true, mission?.phase ?? null)
+  const readyForReceipt = canConfirmReceipt(simulation, order, Date.now())
+  const returning = mission?.received === true
+  const status = completed ? '배송·수령·출발지 복귀 완료' : !fresh ? '비행 상태 확인 중' : active && mode.startsWith('hold_') ? '안전 확인을 위해 대기 중' : mission ? missionStatus(mission.phase) : '출발 대기 중'
 
   return (
     <Screen
       header={<Header title="배달 현황" />}
       footer={
         <Footer>
-          <Button disabled={!completed} onClick={() => navigate('arriving')}>비행 완료 확인</Button>
+          <Button disabled={!completed && !readyForReceipt} onClick={() => navigate('received')}>{completed ? '배송·복귀 완료 보기' : readyForReceipt ? '상품 수령 확인' : !fresh ? '비행 상태 확인 중' : returning ? '드론이 출발지로 복귀 중' : '배송지 착륙 대기'}</Button>
         </Footer>
       }
     >
@@ -157,7 +159,7 @@ export function TrackingScreen() {
         <div><dt>고도</dt><dd>{position ? `${Math.max(0, position[2]).toFixed(1)} m` : '확인 중'}</dd></div>
         <div><dt>현재 위치 (동 / 북)</dt><dd>{position ? `${position[0].toFixed(1)} / ${position[1].toFixed(1)} m` : '확인 중'}</dd></div>
       </dl>}
-      <div className="track-monitor"><p className="desc">주문한 가상 수령 지점에 도착한 뒤 출발지로 귀환합니다. 거리와 도착 예상은 실시간 경로를 기준으로 갱신됩니다.</p>
+      <div className="track-monitor"><p className="desc">수령 장소에 착륙한 뒤 수령 확인을 기다립니다. 수령을 확인하면 재이륙해 출발지로 복귀·착륙합니다. 거리와 도착 예상은 실시간 경로를 기준으로 갱신됩니다.</p>
       <a className="desc" href="/monitor/#camera" target="_blank" rel="noreferrer">실시간 영상과 드론 모니터 열기</a></div>
       {active && !completed && <LiveCamera />}
       <div className="track-drone">
@@ -168,15 +170,12 @@ export function TrackingScreen() {
           <strong>교내 드론 배달</strong>
           <small>{simulation?.drone_id ?? '연결 확인 중'}</small>
         </div>
-        <a className="icon-button track-call" href="tel:0000" aria-label="배달 문의">
-          <PhoneIcon />
-        </a>
       </div>
-      <div className="track-place">
+      <div className="track-place track-destination">
         <span className="desc">받을 장소</span>
         <strong>{order.placeName}</strong>
         <p>주문번호 {order.pickupCode}</p>
-        <p className="desc">이 4자리 번호가 상품 수령 시 사용하는 비밀번호입니다. 계정 비밀번호와 다릅니다.</p>
+        <p className="desc">상품을 받은 뒤 수령 확인 버튼을 누르면 드론이 복귀합니다.</p>
       </div>
     </Screen>
   )
@@ -185,87 +184,11 @@ export function TrackingScreen() {
 /* ───────────── 14 도착 임박 ───────────── */
 
 export function ArrivingScreen() {
-  const { navigate } = useRouter()
-  const order = useOrder()
-
-  return (
-    <Screen
-      header={<Header title="도착 안내" />}
-      footer={
-        <Footer>
-          <Button onClick={() => navigate('tracking')}>실시간 비행 상태 보기</Button>
-        </Footer>
-      }
-    >
-      <section className="arrive-hero">
-        <p className="eyebrow">수령 준비</p>
-        <h1 className="arrive-title">
-          시뮬레이션 비행을
-          <br />
-          확인해 주세요.
-        </h1>
-        <p className="arrive-desc">
-          수령 요청 장소: {order.placeName}
-          <br />
-          실제 배송지 도착 알림은 제공하지 않습니다.
-        </p>
-      </section>
-      <RouteMap />
-      <section className="arrive-place">
-        <div className="arrive-place-row">
-          <h3>{order.placeName}</h3>
-          <span>수령 요청 정보</span>
-        </div>
-        <p className="notice-box arrive-notice">
-          <InfoIcon />
-          <span>
-            아래 화면의 지도는 수령 장소 안내 예시입니다.
-            <br />
-            실제 위치는 실시간 드론 모니터에서 확인해 주세요.
-          </span>
-        </p>
-      </section>
-    </Screen>
-  )
+  return <TrackingScreen />
 }
 
-/* ───────────── 15 수령 확인 ───────────── */
-
 export function ReceivedScreen() {
-  const order = useOrder()
-  const { pickupCode } = order
-
-  return (
-    <Screen
-      header={<Header title="주문 확인" />}
-      footer={
-        <Footer>
-          <Button disabled>수령 확인 준비 중</Button>
-        </Footer>
-      }
-    >
-      <RouteMap />
-      <section className="recv-head">
-        <p className="eyebrow">주문 정보</p>
-        <h1 className="title-xl recv-title">주문번호를 확인해 주세요</h1>
-        <p className="desc recv-desc">시뮬레이션에서는 실물 수령을 확인하지 않습니다.</p>
-      </section>
-      <div className="recv-card-wrap">
-        <div className="recv-card">
-          <p className="recv-label">주문번호</p>
-          <p className="recv-code">{pickupCode}</p>
-          <p className="recv-hint">이 4자리 번호가 상품 수령 시 사용하는 비밀번호입니다. 계정 비밀번호와 다릅니다.</p>
-        </div>
-      </div>
-      <section className="recv-check">
-        <h3>수령 전 확인해 주세요</h3>
-        <ol>
-          <li>주문한 메뉴와 수량을 확인해 주세요.</li>
-          <li>실물 수령 확인 기능은 준비 중입니다.</li>
-        </ol>
-      </section>
-    </Screen>
-  )
+  return <ReceiptScreen order={useOrder()} />
 }
 
 /* ───────────── 16 리뷰 작성 ───────────── */

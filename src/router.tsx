@@ -34,7 +34,8 @@ function routeFromHash(): Route {
 
 type RouterValue = {
   route: Route
-  navigate: (to: Route, options?: { replace?: boolean }) => void
+  loginReturnTo: Route
+  navigate: (to: Route, options?: { readonly replace?: boolean; readonly returnTo?: Route }) => void
   back: () => void
 }
 
@@ -42,6 +43,7 @@ const RouterContext = createContext<RouterValue | null>(null)
 
 export function RouterProvider({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState<Route>(routeFromHash)
+  const [loginReturnTo, setLoginReturnTo] = useState<Route>('home')
 
   useEffect(() => {
     const sync = () => setRoute(routeFromHash())
@@ -49,7 +51,8 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('hashchange', sync)
   }, [])
 
-  const navigate = useCallback((to: Route, options?: { replace?: boolean }) => {
+  const navigate = useCallback((to: Route, options?: { readonly replace?: boolean; readonly returnTo?: Route }) => {
+    if (to === 'login') setLoginReturnTo(options?.returnTo ?? 'home')
     if (options?.replace) {
       window.location.replace(`#/${to}`)
     } else {
@@ -62,7 +65,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     else navigate('home', { replace: true })
   }, [navigate])
 
-  return <RouterContext.Provider value={{ route, navigate, back }}>{children}</RouterContext.Provider>
+  return <RouterContext.Provider value={{ route, loginReturnTo, navigate, back }}>{children}</RouterContext.Provider>
 }
 
 export function useRouter() {

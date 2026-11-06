@@ -1,49 +1,127 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Button, Footer, Header, Screen } from '../components/Layout.tsx'
-import { CheckIcon, ChevronRightIcon, InfoIcon } from '../components/Icons.tsx'
+import { ChevronRightIcon } from '../components/Icons.tsx'
 import { useRouter } from '../router.tsx'
 import { useAuth } from '../auth.tsx'
 import { ApiError } from '../api.ts'
+import { oauthError } from '../oauth.ts'
+import { OAuthButtons } from '../components/OAuthButtons.tsx'
 import { useAppState } from '../store.tsx'
 import snackImage from '../assets/login-snacks.png'
+import { STORE } from '../data.ts'
 import './Onboarding.css'
 
-/* ───────────── 01 약관 동의 ───────────── */
+/* ───────────── 01 이용안내 ───────────── */
 
-type TermKey = 'service' | 'privacy' | 'marketing'
+type TermKey = 'service' | 'privacy'
 
-const TERMS: { key: TermKey; label: string; required: boolean }[] = [
-  { key: 'service', label: '서비스 이용약관', required: true },
-  { key: 'privacy', label: '개인정보 수집 및 이용', required: true },
-  { key: 'marketing', label: '혜택 및 이벤트 알림 수신', required: false },
+const TERMS: { readonly key: TermKey; readonly label: string; readonly body: readonly string[] }[] = [
+  {
+    key: 'service',
+    label: '서비스 이용안내',
+    body: [
+      '교내 배달은 매점 상품 주문부터 드론의 배송·수령·복귀까지 확인하는 시뮬레이션 서비스입니다.',
+      '결제는 테스트 결제이며 실제로 청구되지 않습니다.',
+      '배송 화면은 Gazebo/PX4 시뮬레이터의 위치와 비행 상태를 표시합니다.',
+      '목적지에 착륙한 뒤 상품 수령을 확인하면 드론이 출발지로 복귀합니다.',
+    ],
+  },
+  {
+    key: 'privacy',
+    label: '개인정보 안내',
+    body: [
+      '수집 항목: 아이디, 이름, 휴대폰 번호, 주문 내역, 수령 장소',
+      '계정 정보는 로그인과 본인 주문 내역 조회에 사용됩니다.',
+      '연락처와 수령 장소는 주문 정보에 저장됩니다.',
+      '내 주문과 리뷰는 로그인한 계정으로 확인할 수 있습니다.',
+    ],
+  },
 ]
 
-function Checkbox({ checked }: { checked: boolean }) {
-  return <span className={`checkbox ${checked ? 'is-checked' : ''}`}>{checked && <CheckIcon size={21} />}</span>
+function TermsSheet({ term, onClose }: { term: (typeof TERMS)[number]; onClose: () => void }) {
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const confirmRef = useRef<HTMLButtonElement>(null)
+
+  useLayoutEffect(() => {
+    const backdrop = backdropRef.current
+    if (!backdrop) return
+    const opener = document.activeElement
+    const background: { element: HTMLElement; inert: boolean }[] = []
+    let branch: HTMLElement = backdrop
+    while (branch.parentElement) {
+      for (const sibling of branch.parentElement.children) {
+        if (sibling instanceof HTMLElement && sibling !== branch) {
+          background.push({ element: sibling, inert: sibling.inert })
+          sibling.inert = true
+        }
+      }
+      branch = branch.parentElement
+      if (branch === document.body) break
+    }
+    const scrollContainer = backdrop.closest<HTMLElement>('.screen-body')
+    const previousOverflow = scrollContainer?.style.overflow ?? ''
+    if (scrollContainer) scrollContainer.style.overflow = 'hidden'
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        onClose()
+      } else if (event.key === 'Tab') {
+        // The confirmation button is this read-only sheet's only tab stop.
+        event.preventDefault()
+        confirmRef.current?.focus({ preventScroll: true })
+      }
+    }
+    const containFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !backdrop.contains(event.target)) {
+        confirmRef.current?.focus({ preventScroll: true })
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown, true)
+    document.addEventListener('focusin', containFocus)
+    confirmRef.current?.focus({ preventScroll: true })
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true)
+      document.removeEventListener('focusin', containFocus)
+      for (const { element, inert } of background) element.inert = inert
+      if (scrollContainer) scrollContainer.style.overflow = previousOverflow
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true })
+    }
+  }, [onClose])
+
+  return (
+    <div ref={backdropRef} className="terms-sheet-backdrop" onClick={onClose}>
+      <section
+        className="terms-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="terms-sheet-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id="terms-sheet-title" className="terms-sheet-title">
+          {term.label}
+        </h2>
+        <ul className="terms-sheet-body">
+          {term.body.map((line) => <li key={line}>{line}</li>)}
+        </ul>
+        <button ref={confirmRef} type="button" className="btn btn-primary btn-large btn-block" onClick={onClose}>확인</button>
+      </section>
+    </div>
+  )
 }
 
 export function TermsScreen() {
   const { navigate } = useRouter()
-  const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({
-    service: true,
-    privacy: true,
-    marketing: false,
-  })
-  const allAgreed = TERMS.every((t) => agreed[t.key])
-  const requiredAgreed = TERMS.filter((t) => t.required).every((t) => agreed[t.key])
-
-  const toggleAll = () => {
-    const next = !allAgreed
-    setAgreed({ service: next, privacy: next, marketing: next })
-  }
-
+  const { customer } = useAuth()
+  const [openTerm, setOpenTerm] = useState<TermKey | null>(null)
+  const viewing = TERMS.find((t) => t.key === openTerm)
   return (
     <Screen
-      header={<Header title="서비스 이용 동의" />}
+      header={<Header title="이용안내" />}
       footer={
         <Footer>
-          <Button disabled={!requiredAgreed} onClick={() => navigate('login')}>
-            동의하고 시작하기
+          <Button onClick={() => navigate(customer ? 'settings' : 'login')}>
+            {customer ? '설정으로 돌아가기' : '로그인하고 시작하기'}
           </Button>
         </Footer>
       }
@@ -53,43 +131,30 @@ export function TermsScreen() {
         <h1 className="title-xl terms-title">
           학교 안 배달,
           <br />
-          시작하기 전에 확인해요
+          이렇게 이용해요
         </h1>
         <p className="desc terms-desc">
-          안전한 주문과 수령을 위해
-          <br />
-          이용약관에 동의해 주세요.
+          주문·배송 과정과 개인정보 이용 내용을 확인하세요.
         </p>
-
-        <button type="button" className="terms-all" onClick={toggleAll} aria-pressed={allAgreed}>
-          <Checkbox checked={allAgreed} />
-          <span>전체 동의</span>
-        </button>
 
         <ul className="terms-list">
           {TERMS.map((term) => (
             <li key={term.key} className="terms-item">
               <button
                 type="button"
-                className="terms-check"
-                aria-pressed={agreed[term.key]}
-                onClick={() => setAgreed({ ...agreed, [term.key]: !agreed[term.key] })}
+                className="terms-link"
+                aria-haspopup="dialog"
+                onClick={() => setOpenTerm(term.key)}
               >
-                <Checkbox checked={agreed[term.key]} />
-                <span className={term.required ? 'term-tag is-required' : 'term-tag'}>
-                  {term.required ? '필수' : '선택'}
-                </span>
                 <span className="term-label">{term.label}</span>
-              </button>
-              <button type="button" className="icon-button" aria-label={`${term.label} 보기`}>
                 <ChevronRightIcon />
               </button>
             </li>
           ))}
         </ul>
 
-        <p className="terms-note">선택 항목에 동의하지 않아도 서비스를 이용할 수 있어요.</p>
       </div>
+      {viewing && <TermsSheet term={viewing} onClose={() => setOpenTerm(null)} />}
     </Screen>
   )
 }
@@ -127,7 +192,7 @@ function GoogleLogo() {
 }
 
 export function LoginScreen() {
-  const { navigate } = useRouter()
+  const { navigate, loginReturnTo } = useRouter()
   const auth = useAuth()
   const [signup, setSignup] = useState(false)
   const [username, setUsername] = useState('')
@@ -135,7 +200,7 @@ export function LoginScreen() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => oauthError(location.search))
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (busy) return
@@ -144,7 +209,7 @@ export function LoginScreen() {
       if (signup) await auth.register({ username: username.trim(), password, name: name.trim(), phone: phone.replace(/\D/g, '') })
       else await auth.login({ username: username.trim(), password })
       setPassword('')
-      navigate('home', { replace: true })
+      navigate(loginReturnTo, { replace: true })
     } catch (cause) {
       setError(cause instanceof ApiError && cause.status === 401 ? '아이디 또는 비밀번호를 확인해 주세요.' : cause instanceof ApiError && cause.status === 409 ? '이미 사용 중인 아이디입니다.' : cause instanceof Error ? cause.message : '로그인하지 못했습니다.')
     } finally { setBusy(false) }
@@ -161,23 +226,19 @@ export function LoginScreen() {
         <label className="field">계정 비밀번호<input className="text-input" type="password" autoComplete={signup ? 'new-password' : 'current-password'} required minLength={signup ? 8 : 1} maxLength={128} aria-describedby={signup ? 'auth-password-hint' : undefined} value={password} onChange={event => setPassword(event.target.value)} /></label>
         {signup && <><p id="auth-password-hint" className="auth-hint">계정 비밀번호는 8자 이상 입력해 주세요.</p><label className="field">이름<input className="text-input" autoComplete="name" required maxLength={50} value={name} onChange={event => setName(event.target.value)} /></label>
           <label className="field">휴대폰 번호<input className="text-input" autoComplete="tel" inputMode="tel" required pattern="0[0-9]{10}" placeholder="01012345678" value={phone} onChange={event => setPhone(event.target.value.replace(/\D/g, '').slice(0, 11))} /></label>
-          <p className="desc">주문 안내용 연락처이며 문자 인증은 제공하지 않습니다.</p></>}
+          <p className="desc">입력한 번호를 주문 연락처로 사용합니다.</p></>}
         {error && <p className="auth-error" role="alert">{error}</p>}
         <Button type="submit" disabled={busy || auth.loading}>{busy ? '처리 중…' : signup ? '회원가입' : '로그인'}</Button>
       </form>
       <Button variant="secondary" onClick={() => { setSignup(!signup); setPassword(''); setError(null) }}>{signup ? '로그인으로 돌아가기' : '새 계정 만들기'}</Button>
-      <div className="oauth-row">
-        <button type="button" disabled className="oauth oauth-naver" aria-label="네이버 로그인 준비 중"><NaverLogo /></button>
-        <button type="button" disabled className="oauth oauth-kakao" aria-label="카카오 로그인 준비 중"><KakaoLogo /></button>
-        <button type="button" disabled className="oauth oauth-google" aria-label="구글 로그인 준비 중"><GoogleLogo /></button>
-      </div>
-      <p className="desc">소셜 로그인은 연결 준비 중입니다.</p>
+      <OAuthButtons icons={{ naver: <NaverLogo />, kakao: <KakaoLogo />, google: <GoogleLogo /> }}
+        disabled={busy || auth.loading} onStart={() => setBusy(true)} onReturn={() => setBusy(false)} />
       <Button variant="text" onClick={() => navigate('home')}>메뉴 먼저 둘러보기</Button>
     </section>
   </Screen>
 }
 
-/* ───────────── 03 휴대폰 인증 ───────────── */
+/* ───────────── 03 주문 연락처 ───────────── */
 
 function formatPhone(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 11)
@@ -194,95 +255,31 @@ export function PhoneScreen() {
       <div className="phone">
         <h1 className="title-xl phone-title">주문 안내를 받을 번호를 입력해 주세요</h1>
         <label className="field"><span className="field-label">휴대폰 번호</span><input className="text-input" inputMode="tel" autoComplete="tel" placeholder="010-0000-0000" value={customerPhone} onChange={event => setCustomerPhone(formatPhone(event.target.value))} /></label>
-        <p className="desc">연락처를 저장합니다. 문자 인증은 제공하지 않습니다.</p>
+        <p className="desc">입력한 번호를 주문 연락처로 사용합니다.</p>
       </div>
     </Screen>
   )
 }
 
-/* ───────────── 04 학교 등록 (코드 입력 · 자동 조회 완료 · 조회 결과 없음) ───────────── */
-
-// 백엔드 연결 전 임시 학교 목록
-const SCHOOLS: Record<string, string> = {
-  '123456': '선린인터넷고등학교',
-}
+/* ───────────── 04 이용 학교 ───────────── */
 
 export function SchoolScreen() {
   const { navigate } = useRouter()
-  const [code, setCode] = useState('')
-  const complete = code.length === 6
-  const school = complete ? SCHOOLS[code] : undefined
-  const notFound = complete && !school
-
   return (
     <Screen
-      header={<Header title="학교 등록" />}
-      footer={
-        <Footer>
-          <Button disabled={!school} onClick={() => navigate('place')}>
-            이 학교로 연결하기
-          </Button>
-        </Footer>
-      }
+      header={<Header title="이용 학교" />}
+      footer={<Footer><Button onClick={() => navigate('place')}>수령 장소 선택하기</Button></Footer>}
     >
-      <div className="school">
+      <section className="school">
         <div className="school-intro">
-          <p className="school-eyebrow">학교 연결</p>
-          <h1 className="school-title">
-            어느 학교에서
-            <br />
-            이용하시나요?
-          </h1>
-          <p className="school-desc">학교에서 안내받은 6자리 코드를 입력해 주세요.</p>
+          <h1 className="school-title">{STORE.school}</h1>
+          <p className="school-desc">이 학교 매점에서 상품을 주문하고 교내 수령 장소를 선택할 수 있습니다.</p>
         </div>
-
-        <label className="school-field">
-          <span className="school-label">학교 코드</span>
-          <input
-            className={`school-input ${notFound ? 'is-error' : ''}`}
-            inputMode="numeric"
-            placeholder="학교 코드 6자리"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-          />
-        </label>
-
-        {!complete && (
-          <div className="school-card">
-            <p className="school-hint">
-              <InfoIcon />
-              <span>
-                코드 6자리를 입력하면
-                <br />
-                등록된 학교가 자동으로 표시돼요.
-              </span>
-            </p>
-          </div>
-        )}
-
-        {school && (
-          <div className="school-card is-found" role="status">
-            <p className="school-found-label">학교를 자동으로 찾았어요</p>
-            <p className="school-name">{school}</p>
-            <p className="school-card-desc">학교가 맞는지 확인하고 연결해 주세요.</p>
-          </div>
-        )}
-
-        {notFound && (
-          <div className="school-card" role="status">
-            <p className="school-empty-title">학교를 찾을 수 없어요</p>
-            <p className="school-card-desc">
-              입력한 코드를 다시 확인해 주세요.
-              <br />
-              학교 이름으로 직접 검색할 수도 있어요.
-            </p>
-            <Button variant="secondary" size="medium">
-              학교 이름으로 검색
-            </Button>
-          </div>
-        )}
-      </div>
+        <div className="school-card">
+          <p className="school-name">{STORE.name}</p>
+          <p className="school-card-desc">배송 현황에서 드론의 비행·착륙·복귀 상태를 확인하세요.</p>
+        </div>
+      </section>
     </Screen>
   )
 }

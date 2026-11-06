@@ -51,7 +51,18 @@
 }
 
 .place-option.is-selected .radio {
-  border: 6px solid var(--brand);
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: var(--brand);
+}
+
+.place-option.is-selected .radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--spot-white);
 }
 
 .place-option-text {
@@ -101,11 +112,17 @@
   color: #fff;
   font-size: 16px;
   font-weight: 800;
+  min-height: 44px;
 }
 
 .home-top-actions {
   display: flex;
   align-items: center;
+}
+
+.home-top-actions .icon-button {
+  width: 44px;
+  height: 44px;
 }
 
 .icon-button.is-light {
@@ -168,13 +185,13 @@
 .category-tabs {
   display: flex;
   gap: 8px;
-  height: 60px;
+  min-height: 68px;
   padding: 12px 22px;
 }
 
 .category-tab {
   flex: 1;
-  height: 36px;
+  min-height: 44px;
   border: 0.667px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--spot-white);
@@ -232,7 +249,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  height: 220px;
+  min-height: 220px;
+  min-width: 0;
   text-align: left;
 }
 
@@ -240,21 +258,27 @@
   width: 100%;
   height: 132px;
   border-radius: var(--radius-control);
-  object-fit: cover;
+  object-fit: contain;
   background: #fff;
 }
 
 .product-name {
-  height: 36px;
+  min-height: 36px;
   font-size: 12px;
   line-height: 18px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .product-price {
-  height: 20px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 40px;
   font-size: 13px;
   font-weight: 700;
   line-height: 20px;
+  overflow-wrap: anywhere;
 }
 
 /* ── 공통 ── */
@@ -472,10 +496,6 @@
 }
 
 /* ── 메뉴 상세 ── */
-.like-button.is-liked {
-  color: var(--brand);
-}
-
 .menu-photo {
   display: flex;
   align-items: center;
@@ -568,7 +588,7 @@
 .stepper {
   display: flex;
   align-items: center;
-  height: 35px;
+  min-height: 44px;
   border: 0.667px solid #dfe5e7;
   border-radius: 5px;
   overflow: hidden;
@@ -577,8 +597,8 @@
 .stepper button {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 33px;
+  width: 44px;
+  height: 44px;
   background: #fff;
 }
 
@@ -646,18 +666,23 @@
 }
 
 .cart-line-info .stepper {
-  height: 29px;
+  min-height: 44px;
   margin-top: 6px;
 }
 
 .cart-line-info .stepper button {
-  width: 29px;
-  height: 27px;
+  width: 44px;
+  height: 44px;
 }
 
 .cart-line-remove {
-  margin-top: 4.7px;
-  color: #b4bcbf;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-control);
+  color: var(--muted);
 }
 
 .cart-more {
@@ -783,7 +808,8 @@
 }
 
 .pay-change {
-  min-height: 31px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 5px 10px;
   border: 0.667px solid #dce3e4;
   border-radius: 6px;
@@ -818,28 +844,6 @@
   font-weight: 500;
 }
 
-.pay-methods {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding-top: 10px;
-}
-
-.pay-method {
-  height: 40px;
-  border: 0.667px solid var(--line);
-  border-radius: var(--radius-control);
-  background: #fff;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.pay-method.is-selected {
-  border-color: var(--brand);
-  background: var(--brand-soft);
-  color: var(--brand);
-}
-
 .pay-card {
   padding-top: 12px;
   font-size: 10px;
@@ -860,4 +864,17 @@
   color: var(--muted);
   font-size: 12px;
   background: var(--surface);
+}
+
+.stock-status {
+  display: block;
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.product-price .stock-status {
+  display: block;
+  margin-left: 0;
 }

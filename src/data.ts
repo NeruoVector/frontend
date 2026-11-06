@@ -53,10 +53,3 @@ export const STORE = {
 export function won(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
 }
-
-export const STORE_INFO = {
-  rating: 4.9,
-  reviewCount: 128,
-  tagline: '학교 안 작은 맛집',
-  minOrder: 1000,
-}

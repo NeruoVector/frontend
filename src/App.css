@@ -15,6 +15,19 @@
   display: none;
 }
 
+/* 주문이 없을 때 주문 완료·배송 현황·도착 임박·수령 확인·리뷰 화면 */
+.order-empty {
+  display: grid;
+  gap: 10px;
+  padding: 32px 22px;
+}
+
+.order-empty > .desc {
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
 @media (min-width: 760px) {
   .app-stage {
     display: flex;

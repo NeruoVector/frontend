@@ -6,6 +6,16 @@ const id = '11111111-1111-4111-8111-111111111111'
 const item = { id, sku: 'TEST', name: '실제 상품', description: null, unit_price: 1200, currency: 'KRW', stock_quantity: 3, active: true }
 const order = { id, order_number: 'NV-1234', pickup_code: '1234', customer_name: '테스트', customer_phone: '01000000000', status: 'pending_payment', total_amount: 1200, delivery_address: '학교', delivery_detail: null, notes: null, created_at: '2026-11-05T00:00:00Z', items: [], payment: null }
 
+test('receipt posts an explicit confirmation without a pickup code', async t => {
+  let body
+  t.mock.method(globalThis, 'fetch', async request => {
+    body = JSON.parse(await request.text())
+    return Response.json({ order_id: id, received: true })
+  })
+  assert.equal((await api.confirmReceipt(id)).received, true)
+  assert.deepEqual(body, { confirmed: true })
+})
+
 test('inventory and phone-filtered order history use backend paths and server fields', async t => {
   const calls = []
   t.mock.method(globalThis, 'fetch', async request => {

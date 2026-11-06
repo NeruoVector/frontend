@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type SimulationState } from './api.ts'
-import { freshSimulation, matchingMission } from './flightProgress.ts'
+import { canConfirmReceipt, freshSimulation, matchingMission } from './flightProgress.ts'
 import { canHaveFlightCompletion } from './orderFlightCompletion.ts'
 
 export function useOrderFlightProgress(order: { readonly id: string; readonly status: string }) {
@@ -8,6 +8,10 @@ export function useOrderFlightProgress(order: { readonly id: string; readonly st
   const [simulation, setSimulation] = useState<SimulationState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [nowMs, setNowMs] = useState(Date.now)
+  useEffect(() => {
+    const clock = setInterval(() => setNowMs(Date.now()), 1000)
+    return () => clearInterval(clock)
+  }, [])
   useEffect(() => {
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -32,5 +36,5 @@ export function useOrderFlightProgress(order: { readonly id: string; readonly st
   const eligible = canHaveFlightCompletion(order.status)
   const active = eligible && fresh && simulation?.order_id === order.id
   const completed = order.status === 'delivered' || (eligible && completedOrderId === order.id)
-  return { simulation, fresh, active, completed, error, mission: eligible ? matchingMission(simulation, order.id, nowMs) : null }
+  return { simulation, fresh, active, completed, error, awaitingReceipt: !completed && canConfirmReceipt(simulation, order, nowMs), mission: eligible ? matchingMission(simulation, order.id, nowMs) : null }
 }

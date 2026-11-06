@@ -108,52 +108,6 @@
   color: #8e9b9f;
 }
 
-.my-profile-more {
-  margin-left: auto;
-  color: #b4bcbf;
-}
-
-.my-stats-wrap {
-  padding: 0 22px;
-}
-
-.my-stats {
-  display: flex;
-  padding: 19px 8px;
-  border-radius: 8px;
-  background: var(--brand-tint);
-}
-
-.my-stats > div {
-  flex: 1;
-  text-align: center;
-}
-
-.my-stats > div + div {
-  border-left: 0.667px solid #ead5da;
-}
-
-.my-stats dt {
-  padding-bottom: 9px;
-  font-size: 10px;
-  color: #8b6a71;
-}
-
-.my-stats dd {
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.my-stats small {
-  margin-left: 2px;
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.my-gap {
-  margin-top: 25px;
-}
-
 .menu-item {
   display: flex;
   align-items: center;
@@ -196,55 +150,6 @@
   font-size: 11px;
   font-weight: 700;
   color: #8c9d9f;
-}
-
-.settings-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 22px;
-  border-bottom: 0.667px solid #eff3f3;
-}
-
-.settings-toggle-row p {
-  font-size: 12px;
-}
-
-.settings-toggle-row small {
-  display: block;
-  padding-top: 6px;
-  font-size: 10px;
-  color: #99a7a9;
-}
-
-.toggle {
-  position: relative;
-  flex-shrink: 0;
-  width: 37px;
-  height: 22px;
-  border-radius: 15px;
-  background: #dfe5e5;
-  transition: background 0.15s;
-}
-
-.toggle span {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  transition: left 0.15s;
-}
-
-.toggle.is-on {
-  background: var(--brand);
-}
-
-.toggle.is-on span {
-  left: 18px;
 }
 
 .settings-list .menu-item {

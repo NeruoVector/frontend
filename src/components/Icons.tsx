@@ -186,13 +186,14 @@ export function CardIcon(props: IconProps) {
 export function SettingsIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+      {/* 톱니 8개짜리 기어. 예전 모양(원 + 짧은 선)은 해처럼 보였다. */}
       <path
-        d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M5.6 18.4l1.6-1.6M16.8 7.2l1.6-1.6"
+        d="M9.84 4.92 L10.33 2.55 L13.67 2.55 L14.16 4.92 L15.47 5.47 L17.51 4.14 L19.86 6.49 L18.53 8.53 L19.08 9.84 L21.45 10.33 L21.45 13.67 L19.08 14.16 L18.53 15.47 L19.86 17.51 L17.51 19.86 L15.47 18.53 L14.16 19.08 L13.67 21.45 L10.33 21.45 L9.84 19.08 L8.53 18.53 L6.49 19.86 L4.14 17.51 L5.47 15.47 L4.92 14.16 L2.55 13.67 L2.55 10.33 L4.92 9.84 L5.47 8.53 L4.14 6.49 L6.49 4.14 L8.53 5.47 Z"
         stroke="currentColor"
         strokeWidth="1.8"
-        strokeLinecap="round"
+        strokeLinejoin="round"
       />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   )
 }

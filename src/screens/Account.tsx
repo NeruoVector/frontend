@@ -2,12 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Header, Screen } from '../components/Layout.tsx'
 import { BottomNav } from '../components/BottomNav.tsx'
 import {
-  BellIcon,
   CardIcon,
   ChevronRightIcon,
   LogoutIcon,
-  PlusIcon,
-  PhoneIcon,
   PinIcon,
   ReceiptIcon,
   SettingsIcon,
@@ -145,7 +142,7 @@ function MenuItem({
   icon?: ReactNode
   label: string
   value?: string
-  onClick?: () => void
+  onClick: () => void
 }) {
   return (
     <button type="button" className="menu-item" onClick={onClick}>
@@ -161,7 +158,6 @@ export function MyScreen() {
   const { navigate } = useRouter()
   const { place } = useAppState()
   const { customer } = useAuth()
-  const reviews = useReviews(customer?.id, Boolean(customer), true)
   const go = (route: Route) => () => navigate(route)
 
   return (
@@ -187,67 +183,19 @@ export function MyScreen() {
             <p>{customer?.username ?? '계정으로 주문 내역을 관리하세요'}</p>
             {!customer && <button type="button" className="order-btn" onClick={go('login')}>로그인</button>}
           </div>
-          <button type="button" className="icon-button my-profile-more" aria-label="내 정보">
-            <ChevronRightIcon />
-          </button>
         </section>
-        <div className="my-stats-wrap">
-          <dl className="my-stats">
-            <div>
-              <dt>포인트</dt>
-              <dd>
-                500<small>P</small>
-              </dd>
-            </div>
-            <div>
-              <dt>쿠폰</dt>
-              <dd>
-                2<small>장</small>
-              </dd>
-            </div>
-            <div>
-              <dt>내 리뷰</dt>
-              <dd>
-                {reviews.state.status === 'ready' ? reviews.state.data.total : '—'}<small>개</small>
-              </dd>
-            </div>
-          </dl>
-        </div>
-        <div className="section-gap my-gap" />
+        <div className="section-gap" />
         <MenuItem icon={<ReceiptIcon size={18} />} label="주문 내역" onClick={go('orders')} />
         <MenuItem icon={<ReceiptIcon size={18} />} label="내 리뷰" onClick={go('reviews')} />
-        <MenuItem icon={<CardIcon size={18} />} label="결제수단 관리" onClick={go('payment-methods')} />
+        <MenuItem icon={<CardIcon size={18} />} label="결제 안내" onClick={go('payment-methods')} />
         <MenuItem icon={<PinIcon size={18} />} label="기본 수령 장소" value={place.name} onClick={go('change-place')} />
         <div className="section-gap" />
-        <MenuItem icon={<BellIcon size={18} />} label="공지사항" />
-        <MenuItem icon={<PhoneIcon size={18} />} label="고객센터" />
         <MenuItem icon={<SettingsIcon size={18} />} label="설정" onClick={go('settings')} />
       </Screen>
   )
 }
 
 /* ───────────── 19 설정 ───────────── */
-
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className={`toggle ${checked ? 'is-on' : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span />
-    </button>
-  )
-}
-
-const NOTIFICATIONS = [
-  { key: 'order', label: '주문 상태 알림', desc: '주문 접수와 배달 진행을 알려드려요' },
-  { key: 'arrive', label: '도착 알림', desc: '수령 장소에 도착하면 알려드려요' },
-  { key: 'event', label: '혜택 및 이벤트 알림', desc: '새로운 소식과 혜택을 받아보세요' },
-] as const
 
 export function SettingsScreen() {
   const { navigate } = useRouter()
@@ -258,34 +206,21 @@ export function SettingsScreen() {
     try { await logout(); navigate('login', { replace: true }) }
     catch (cause) { setLogoutError(cause instanceof Error ? cause.message : '로그아웃하지 못했습니다.') }
   }
-  const [notify, setNotify] = useState<Record<string, boolean>>({ order: true, arrive: true, event: false })
 
   return (
     <Screen header={<Header title="설정" />}>
-      <p className="settings-group">알림 설정</p>
-      {NOTIFICATIONS.map((n) => (
-        <div key={n.key} className="settings-toggle-row">
-          <div>
-            <p>{n.label}</p>
-            <small>{n.desc}</small>
-          </div>
-          <Toggle label={n.label} checked={notify[n.key]} onChange={(v) => setNotify({ ...notify, [n.key]: v })} />
-        </div>
-      ))}
       <p className="settings-group">주문 설정</p>
       <div className="settings-list">
         <MenuItem icon={<PinIcon size={18} />} label="기본 수령 장소" value={place.name} onClick={() => navigate('change-place')} />
-        <MenuItem icon={<CardIcon size={18} />} label="결제수단 관리" onClick={() => navigate('payment-methods')} />
+        <MenuItem icon={<CardIcon size={18} />} label="결제 안내" onClick={() => navigate('payment-methods')} />
       </div>
       <p className="settings-group">앱 정보</p>
       <div className="settings-list">
-        <MenuItem label="이용약관" onClick={() => navigate('terms')} />
-        <MenuItem label="개인정보 처리방침" />
-        <MenuItem label="앱 버전" value="1.0.0" />
+        <MenuItem label="이용안내 · 개인정보" onClick={() => navigate('terms')} />
       </div>
       <p className="settings-group">계정</p>
       <div className="settings-list">
-        <MenuItem icon={<LogoutIcon size={18} />} label="로그아웃" onClick={() => customer ? void endSession() : navigate('login')} />
+        <MenuItem icon={<LogoutIcon size={18} />} label={customer ? '로그아웃' : '로그인'} onClick={() => customer ? void endSession() : navigate('login')} />
       </div>
       {logoutError && <p role="alert">{logoutError}</p>}
       <p className="settings-footer">{STORE.name.replace(' 매점', '')} 교내 배달</p>
@@ -295,65 +230,7 @@ export function SettingsScreen() {
 
 /* ───────────── 20 결제수단 관리 ───────────── */
 
-type PayCard = { id: string; name: string; last4: string; theme: 'light' | 'dark' }
-
-export function PaymentMethodsScreen() {
-  const [cards, setCards] = useState<PayCard[]>([
-    { id: 'shinhan', name: '신한카드', last4: '1234', theme: 'light' },
-    { id: 'kb', name: '국민은행', last4: '5678', theme: 'dark' },
-  ])
-  const [defaultId, setDefaultId] = useState('shinhan')
-
-  return (
-    <Screen header={<Header title="결제수단 관리" />}>
-      <div className="paym">
-        <p className="desc paym-desc">자주 쓰는 결제수단을 등록해 두세요.</p>
-        <div className="paym-cards">
-          {cards.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`pay-card-item is-${c.theme}`}
-              aria-pressed={c.id === defaultId}
-              onClick={() => setDefaultId(c.id)}
-            >
-              <span className="pay-card-top">
-                <strong>{c.name}</strong>
-                {c.id === defaultId && <span className="pay-card-badge">기본</span>}
-              </span>
-              <span className="pay-card-chip" />
-              <span className="pay-card-number">•••• •••• {c.last4}</span>
-              <span className="pay-card-brand">SEONRIN</span>
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="paym-add"
-          onClick={() =>
-            setCards((prev) => [
-              ...prev,
-              {
-                id: `card-${prev.length + 1}`,
-                name: '새 카드',
-                last4: String(1000 + prev.length * 1111).slice(-4),
-                theme: prev.length % 2 === 0 ? 'light' : 'dark',
-              },
-            ])
-          }
-        >
-          <PlusIcon />
-          <span>결제수단 추가</span>
-        </button>
-        <p className="paym-note">
-          결제수단을 누르면 기본 결제수단으로 설정돼요.
-          <br />
-          등록된 정보는 이 시안 안에서만 사용됩니다.
-        </p>
-      </div>
-    </Screen>
-  )
-}
+export { PaymentMethodsScreen } from './PaymentMethods.tsx'
 
 export function MyReviewsScreen() {
   const { customer } = useAuth()
