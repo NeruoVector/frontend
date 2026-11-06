@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { PLACES, PRODUCTS, type Place, type Product } from './data.ts'
 import { useAuth } from './auth.tsx'
 import { api, type Item, type OrderDetail } from './api.ts'
+import { useProductPhotos } from './useProductPhotos.ts'
+import { productWithPhoto } from './productPhotoProducts.ts'
 
 export type CartLine = { product: Product; quantity: number }
 export type Order = {
@@ -57,6 +59,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [customerPhone, setCustomerPhone] = useState('')
   const checkoutBusy = useRef(false)
   const pendingOrder = useRef<string | null>(null)
+  const photos = useProductPhotos()
 
   useEffect(() => {
     let active = true
@@ -97,17 +100,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [customer?.id, products])
 
   const value = useMemo<AppState>(() => {
-    const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0)
-    const subtotal = cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0)
+    const withPhoto = (product: Product): Product => productWithPhoto(product, photos)
+    const visibleProducts = products.map(withPhoto)
+    const visibleCart = cart.map(line => ({ ...line, product: withPhoto(line.product) }))
+    const visibleOrder = order ? { ...order, lines: order.lines.map(line => ({ ...line, product: withPhoto(line.product) })) } : null
+    const cartCount = visibleCart.reduce((sum, line) => sum + line.quantity, 0)
+    const subtotal = visibleCart.reduce((sum, line) => sum + line.product.price * line.quantity, 0)
     return {
-      place, setPlace, products, catalogError, loading, orderNote, setOrderNote, cart, cartCount, subtotal, deliveryFee: 0, total: subtotal,
+      place, setPlace, products: visibleProducts, catalogError, loading, orderNote, setOrderNote, cart: visibleCart, cartCount, subtotal, deliveryFee: 0, total: subtotal,
       addToCart: (product, quantity = 1) => setCart(prev => {
         const found = prev.find(line => line.product.id === product.id)
         if (found) return prev.map(line => line.product.id === product.id ? { ...line, quantity: Math.min(product.stock, line.quantity + quantity) } : line)
         return product.stock > 0 ? [...prev, { product, quantity: Math.min(quantity, product.stock) }] : prev
       }),
       setQuantity: (id, quantity) => setCart(prev => quantity <= 0 ? prev.filter(line => line.product.id !== id) : prev.map(line => line.product.id === id ? { ...line, quantity: Math.min(quantity, line.product.stock) } : line)),
-      clearCart: () => setCart([]), selectedProduct, selectProduct, order,
+      clearCart: () => setCart([]), selectedProduct: selectedProduct ? withPhoto(selectedProduct) : null, selectProduct, order: visibleOrder,
       customerName, setCustomerName, customerPhone, setCustomerPhone,
       loadOrder: async id => {
         const owner = identity.current
@@ -147,7 +154,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         } finally { checkoutBusy.current = false }
       },
     }
-  }, [place, products, catalogError, loading, orderNote, cart, selectedProduct, order, customerName, customerPhone, customer])
+  }, [place, products, catalogError, loading, orderNote, cart, selectedProduct, order, customerName, customerPhone, customer, photos])
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
 }
