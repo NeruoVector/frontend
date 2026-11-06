@@ -30,3 +30,11 @@ until configured. Session identity and private histories come from the server co
 Pickup number is the server-issued four decimal digits; receipt-password explanation
 is separate from the account password. Camera opens automatically and shows the video
 without playback controls; loading/error text and explicit retry appear only as needed.
+
+Configured social login: primary action remains account login. Existing Kakao/Naver/Google
+44px icon buttons activate only when the server reports that provider configured; secrets
+never enter the browser bundle. Reuse oauth-row, oauth brand classes, Button, auth-error
+and desc. Required states: provider availability pending/unavailable/error with retry,
+redirect-in-progress disabling, cancelled/expired/failed callback feedback, and ordinary
+password-login fallback. Layout: preserve existing stacked login-actions and oauth-row;
+.screen-body remains the scroll owner, with the desktop phone frame unchanged.

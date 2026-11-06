@@ -4,6 +4,8 @@ import { CheckIcon, ChevronRightIcon, InfoIcon } from '../components/Icons.tsx'
 import { useRouter } from '../router.tsx'
 import { useAuth } from '../auth.tsx'
 import { ApiError } from '../api.ts'
+import { oauthError } from '../oauth.ts'
+import { OAuthButtons } from '../components/OAuthButtons.tsx'
 import { useAppState } from '../store.tsx'
 import snackImage from '../assets/login-snacks.png'
 import './Onboarding.css'
@@ -247,7 +249,7 @@ export function LoginScreen() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => oauthError(location.search))
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (busy) return
@@ -278,12 +280,8 @@ export function LoginScreen() {
         <Button type="submit" disabled={busy || auth.loading}>{busy ? '처리 중…' : signup ? '회원가입' : '로그인'}</Button>
       </form>
       <Button variant="secondary" onClick={() => { setSignup(!signup); setPassword(''); setError(null) }}>{signup ? '로그인으로 돌아가기' : '새 계정 만들기'}</Button>
-      <div className="oauth-row">
-        <button type="button" disabled className="oauth oauth-naver" aria-label="네이버 로그인 준비 중"><NaverLogo /></button>
-        <button type="button" disabled className="oauth oauth-kakao" aria-label="카카오 로그인 준비 중"><KakaoLogo /></button>
-        <button type="button" disabled className="oauth oauth-google" aria-label="구글 로그인 준비 중"><GoogleLogo /></button>
-      </div>
-      <p className="desc">소셜 로그인은 연결 준비 중입니다.</p>
+      <OAuthButtons icons={{ naver: <NaverLogo />, kakao: <KakaoLogo />, google: <GoogleLogo /> }}
+        disabled={busy || auth.loading} onStart={() => setBusy(true)} onReturn={() => setBusy(false)} />
       <Button variant="text" onClick={() => navigate('home')}>메뉴 먼저 둘러보기</Button>
     </section>
   </Screen>
