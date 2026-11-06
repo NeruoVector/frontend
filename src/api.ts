@@ -43,12 +43,19 @@ export type Review = z.infer<typeof reviewSchema>;
 export type ReviewList = z.infer<typeof reviewListSchema>;
 export type CreateReview = { readonly rating: number; readonly content: string; readonly tags: readonly string[]; readonly photo_data_url: string | null };
 
+export const cardKindSchema = z.enum(['card', 'bank_account', 'mobile']);
+export const cardMetadataInputSchema = z.object({ kind: cardKindSchema });
+const cardMetadataSchema = z.object({ id: z.uuid(), nickname: z.string(), last4: z.string().regex(/^[0-9]{4}$/), created_at: z.string(), kind: cardKindSchema, is_demo: z.literal(true) });
+const cardMetadataListSchema = z.object({ items: z.array(cardMetadataSchema), storage_available: z.boolean(), payment_enabled: z.literal(false) });
+export type CardMetadataInput = z.infer<typeof cardMetadataInputSchema>;
+export type CardMetadata = z.infer<typeof cardMetadataSchema>;
+
 export class ApiError extends Error {
   readonly status: number;
   constructor(status: number, message: string) { super(message); this.status = status; }
 }
 
-async function request<T>(path: string, schema: z.ZodType<T>, json?: CreateOrder | CreateReview | LoginInput | RegisterInput | { readonly method: string }): Promise<T> {
+async function request<T>(path: string, schema: z.ZodType<T>, json?: CardMetadataInput | CreateOrder | CreateReview | LoginInput | RegisterInput | { readonly method: string }): Promise<T> {
   try {
     const response = json === undefined ? await http.get(new URL(`${BASE_URL}${path}`, globalThis.location?.origin ?? 'http://localhost').href) : await http.post(new URL(`${BASE_URL}${path}`, globalThis.location?.origin ?? 'http://localhost').href, { json });
     return schema.parse(await response.json());
@@ -67,6 +74,15 @@ export type LoginInput = { readonly username: string; readonly password: string 
 export type RegisterInput = LoginInput & { readonly name: string; readonly phone: string };
 
 export const api = {
+  cards: () => request('/api/v1/auth/cards', cardMetadataListSchema),
+  addCard: (input: CardMetadataInput) => request('/api/v1/auth/cards', cardMetadataSchema, cardMetadataInputSchema.parse(input)),
+  removeCard: async (id: string) => {
+    try { await http.delete(new URL(`${BASE_URL}/api/v1/auth/cards/${encodeURIComponent(id)}`, globalThis.location?.origin ?? 'http://localhost').href); }
+    catch (cause) {
+      if (cause instanceof HTTPError) throw new ApiError(cause.response.status, '카드 정보를 삭제하지 못했습니다. 다시 시도해 주세요.');
+      throw cause;
+    }
+  },
   login: (input: LoginInput) => request('/api/v1/auth/login', customerSchema, input),
   register: (input: RegisterInput) => request('/api/v1/auth/register', customerSchema, input),
   me: () => request('/api/v1/auth/me', customerSchema),

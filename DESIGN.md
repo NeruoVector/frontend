@@ -31,6 +31,15 @@ Pickup number is the server-issued four decimal digits; receipt-password explana
 is separate from the account password. Camera opens automatically and shows the video
 without playback controls; loading/error text and explicit retry appear only as needed.
 
+Demo payment methods: primary action is 결제수단 추가, opening 카드 / 계좌 / 휴대폰
+selection. Priorities: 결제 미연동 and demo/payment-impossible notice, saved masked
+server-generated display numbers, then type selection. No real financial data entry.
+Required: three kinds, random display number persisted by server, delete, login,
+loading/empty/error and storage unavailable states. No default or validity claim.
+Layout: existing mobile Screen body owns scroll; fixed Header, stacked saved tiles
+then add action and type buttons; existing desktop phone frame. Reuse pay-card-item,
+Button and existing tokens. Controls44px minimum targets,12px spacing,13px text.
+
 Configured social login: primary action remains account login. Existing Kakao/Naver/Google
 44px icon buttons activate only when the server reports that provider configured; secrets
 never enter the browser bundle. Reuse oauth-row, oauth brand classes, Button, auth-error

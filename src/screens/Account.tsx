@@ -6,7 +6,6 @@ import {
   CardIcon,
   ChevronRightIcon,
   LogoutIcon,
-  PlusIcon,
   PhoneIcon,
   PinIcon,
   ReceiptIcon,
@@ -295,65 +294,7 @@ export function SettingsScreen() {
 
 /* ───────────── 20 결제수단 관리 ───────────── */
 
-type PayCard = { id: string; name: string; last4: string; theme: 'light' | 'dark' }
-
-export function PaymentMethodsScreen() {
-  const [cards, setCards] = useState<PayCard[]>([
-    { id: 'shinhan', name: '신한카드', last4: '1234', theme: 'light' },
-    { id: 'kb', name: '국민은행', last4: '5678', theme: 'dark' },
-  ])
-  const [defaultId, setDefaultId] = useState('shinhan')
-
-  return (
-    <Screen header={<Header title="결제수단 관리" />}>
-      <div className="paym">
-        <p className="desc paym-desc">자주 쓰는 결제수단을 등록해 두세요.</p>
-        <div className="paym-cards">
-          {cards.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`pay-card-item is-${c.theme}`}
-              aria-pressed={c.id === defaultId}
-              onClick={() => setDefaultId(c.id)}
-            >
-              <span className="pay-card-top">
-                <strong>{c.name}</strong>
-                {c.id === defaultId && <span className="pay-card-badge">기본</span>}
-              </span>
-              <span className="pay-card-chip" />
-              <span className="pay-card-number">•••• •••• {c.last4}</span>
-              <span className="pay-card-brand">SEONRIN</span>
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="paym-add"
-          onClick={() =>
-            setCards((prev) => [
-              ...prev,
-              {
-                id: `card-${prev.length + 1}`,
-                name: '새 카드',
-                last4: String(1000 + prev.length * 1111).slice(-4),
-                theme: prev.length % 2 === 0 ? 'light' : 'dark',
-              },
-            ])
-          }
-        >
-          <PlusIcon />
-          <span>결제수단 추가</span>
-        </button>
-        <p className="paym-note">
-          결제수단을 누르면 기본 결제수단으로 설정돼요.
-          <br />
-          등록된 정보는 이 시안 안에서만 사용됩니다.
-        </p>
-      </div>
-    </Screen>
-  )
-}
+export { PaymentMethodsScreen } from './PaymentMethods.tsx'
 
 export function MyReviewsScreen() {
   const { customer } = useAuth()
